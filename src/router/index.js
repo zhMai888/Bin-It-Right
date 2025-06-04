@@ -1,6 +1,6 @@
 import Vue, { KeepAlive } from 'vue'
 import VueRouter from 'vue-router'
-import index from '../views/index.vue'
+import login from '../views/login.vue'
 import game from '../views/game.vue'
 
 Vue.use(VueRouter)
@@ -8,8 +8,8 @@ Vue.use(VueRouter)
 const routes = [
   {
     path: '/',
-    name: 'index',
-    component: index,
+    name: 'login',
+    component: login,
     meta: {
       requireAuth: false
     }
