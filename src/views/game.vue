@@ -42,12 +42,27 @@
           <p v-if="best_score>=score"><span class="timeout-clock">⏰</span> Time out!</p>
           <p v-else><span class="timeout-clock2">🎉</span> Congratulations!</p>
         </div>
+        <Firework
+          v-if="showFirework"
+          :particleCount="180"
+          :angle="90"
+          :spread="130"
+          :startVelocity="55"
+          :ticks="1000"
+          :colors="['#ff4b4b', '#ffd700', '#00e5ff', '#00ff7f', '#ff69b4']"
+          :x="centerX"
+          :y="centerY"
+        />
       </div>
     </div>
   </template>
   
   <script>
+  import Firework from '@/components/fireworks/fireworks.vue'
   export default {
+    components: {
+      Firework
+    },
     data() {
       return {
         bins: [
@@ -57,6 +72,8 @@
           { id: 4, type: 'hazardous', label: '有害' , img: require("../assets/hazardous_waste.png")},
           { id: 5, type: 'kichen', label: '厨余' , img: require("../assets/kitchen_waste.png")}
         ],
+        centerX: window.innerWidth / 2,
+        centerY: window.innerHeight / 2,
         currentStartY: 0,
         lastStartBottom: 0,
         garbageList: [],
@@ -67,35 +84,39 @@
         animationFrameId: null,
         change_speed: 0.15,
         score: 20,
-        best_score: 0,
-        leasetime: 30,
+        best_score: 30,
+        leasetime: 3,
         gameOver: false,
         showTimeout: false,
+        showFirework: false,
       };
     },
     mounted() {
-        if (this.garbageList.length === 0) {
-            this.throwMultipleGarbage();
+      window.addEventListener('resize', this.updateCenter);
+      this.updateCenter();
+      if (this.garbageList.length === 0) {
+          this.throwMultipleGarbage();
+      }
+      let that = this
+      setInterval(() => {
+        if (this.leasetime > 0) {
+          this.leasetime--;
+        } else if (this.leasetime === 0 && !this.showTimeout && !this.gameOver) {
+          that.triggerTimeout();
         }
-        let that = this
-        setInterval(() => {
-          if (this.leasetime > 0) {
-            this.leasetime--;
-          } else if (this.leasetime === 0 && !this.showTimeout && !this.gameOver) {
-            that.triggerTimeout();
+      }, 1000);
+
+      setInterval(() => {
+          if (this.garbageList.length === 0) {
+          this.throwMultipleGarbage();
           }
-        }, 1000);
+      }, 7000);
 
-        setInterval(() => {
-            if (this.garbageList.length === 0) {
-            this.throwMultipleGarbage();
-            }
-        }, 7000);
-
-        this.startAnimation();
+      this.startAnimation();
     },
     beforeDestroy() {
       cancelAnimationFrame(this.animationFrameId);
+      window.removeEventListener('resize', this.updateCenter);
     },
     computed: {
       handBottom() {
@@ -118,12 +139,20 @@
       }
     },
     methods: {
+      updateCenter() {
+        this.centerX = window.innerWidth / 2;
+        this.centerY = window.innerHeight / 2;
+      },
       triggerTimeout() {
         this.gameOver = true;
         this.showTimeout = true;
         cancelAnimationFrame(this.animationFrameId);
+        setTimeout(()=>{
+          this.showFirework = this.score >= this.best_score;
+        }, 1000);
         setTimeout(() => {
           this.showTimeout = false;
+          this.showFirework = false;
         }, 5000);
       },
       mixColor(c1, c2, ratio) {
@@ -406,7 +435,14 @@
 }
 .timeout-clock2 {
   display: inline-block;
-  animation: clock-shake 0.5s ease-in-out 1s 1;
+}
+
+.firework-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 10001;
 }
 
 @keyframes timeout-move {
