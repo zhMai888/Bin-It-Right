@@ -32,9 +32,13 @@
         v-for="bin in bins"
         :key="bin.id"
         class="bin"
+        :class="{ 'has-emotion': bin.emotion }"
         @click="throwGarbage(bin.type)"
       >
         <img :src="bin.img" :alt="bin.label" draggable="false" style="width: 200px; height: 250px;">
+        <div class="bin-emotion" v-if="bin.emotion">
+          {{ bin.emotion }}
+        </div>
       </div>
     </div>
     <div v-if="gameOver" class="overlay">
@@ -66,12 +70,26 @@ export default {
   data() {
     return {
       bins: [
-        { id: 1, type: 'shop', label: '商店' , img: ""},
-        { id: 2, type: 'recycle', label: '可回收' , img: require('../assets/recyclable.png')},
-        { id: 3, type: 'nonerecyle', label: '不可回收' , img: require("../assets/non-recyclable.png")},
-        { id: 4, type: 'hazardous', label: '有害' , img: require("../assets/hazardous_waste.png")},
-        { id: 5, type: 'kichen', label: '厨余' , img: require("../assets/kitchen_waste.png")}
+        { id: 1, type: 'shop', label: '商店' , img: "", emotion: null},
+        { id: 2, type: 'recycle', label: '可回收' , img: require('../assets/bin/recyclable.png'), emotion: null},
+        { id: 3, type: 'nonerecyle', label: '不可回收' , img: require("../assets/bin/non-recyclable.png"), emotion: null},
+        { id: 4, type: 'hazardous', label: '有害' , img: require("../assets/bin/hazardous_waste.png"), emotion: null},
+        { id: 5, type: 'kichen', label: '厨余' , img: require("../assets/bin/kitchen_waste.png"), emotion: null}
       ],
+      trash: [
+        {id: 1, img: require("../assets/trash/bananapeel.png"), typeid: 5},
+        {id: 2, img: require("../assets/trash/bone.png"), typeid: 5},
+        {id: 3, img: require("../assets/trash/cigarette.png"), typeid: 4},
+        {id: 4, img: require("../assets/trash/eggshell.png"), typeid: 5},
+        {id: 5, img: require("../assets/trash/fishbone.png"), typeid: 5},
+        {id: 6, img: require("../assets/trash/lighter.png"), typeid: 3},
+        {id: 7, img: require("../assets/trash/orangepeel.png"), typeid: 5},
+        {id: 8, img: require("../assets/trash/shabbyclothes.png"), typeid: 2},
+        {id: 9, img: require("../assets/trash/tissue.png"), typeid: 3},
+        {id: 10, img: require("../assets/trash/watermelonpeel.png"), typeid: 5},
+      ],
+      happy: ['😄','😆','ヾ(≧▽≦*)o','\^o^/','<(￣︶￣)↗[GOOD!]','(´▽`ʃ♡ƪ)','fantastic','unbelievable'],
+      sad: ['😢', '💔','💢','(╥﹏╥)','(｡•́︿•̀｡)','(¬_¬")', '＞﹏＜','(╯︵╰,)', 'sad', 'careful'],
       centerX: window.innerWidth / 2,
       centerY: window.innerHeight / 2,
       currentStartY: 0,
@@ -83,9 +101,9 @@ export default {
       idCounter: 1,
       animationFrameId: null,
       change_speed: 0.15,
-      score: 20,
+      score: 0,
       best_score: 10,
-      leasetime: 3,
+      leasetime: 10,
       gameOver: false,
       showTimeout: false,
       showFirework: false,
@@ -198,7 +216,7 @@ export default {
             // 2秒后移除
             setTimeout(() => {
               this.removeGarbage(g.id);
-            }, 2000);
+            }, 2500);
           }
         }
 
@@ -275,14 +293,29 @@ export default {
     },
     throwGarbage(binType) {
       if (this.selectedGarbage == null) return;
+
+      const matchedBin = this.bins.find(b => b.type === binType);
+      if (!matchedBin) return;
+
+      // 清空所有垃圾桶表情，避免表情转移
+      this.bins.forEach(b => b.emotion = null);
+
       const index = this.garbageList.findIndex(g => g.id === this.selectedGarbage);
       if (index !== -1) {
         const g = this.garbageList[index];
+
         if (g.type === binType) {
-          alert('✅ 分类正确！');
+          this.score += 1;
+          matchedBin.emotion = this.happy[Math.floor(Math.random() * this.happy.length)];
         } else {
-          alert('❌ 分类错误！');
+          this.score -= 1;
+          matchedBin.emotion = this.sad[Math.floor(Math.random() * this.sad.length)];
         }
+
+        setTimeout(() => {
+          matchedBin.emotion = null; 
+        }, 1500);
+
         this.removeGarbage(g.id);
         this.selectedGarbage = null;
       }
@@ -351,6 +384,7 @@ export default {
   margin: 0 10px;
   user-select: none;
   transition: background 0.3s;
+  position: relative;
 }
 .bin:hover {
   filter: brightness(120%);
@@ -445,6 +479,43 @@ pointer-events: none;
 z-index: 10001;
 }
 
+.bin-emotion {
+  position: absolute;
+  bottom: 130%;
+  left: 150%;
+  transform: translateX(-50%) scale(0.8);
+  font-size: 32px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  background: #fff;
+  border-radius: 16px;
+  padding: 4px 12px;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+
+.bin-emotion::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -6px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 14px solid #fff;
+}
+
+.bin.has-emotion .bin-emotion {
+  opacity: 1;
+  transform: translateX(-50%) scale(1.1);
+  animation: bubble-pop 0.4s ease-out;
+}
+
+
 @keyframes timeout-move {
 0% {
   bottom: -100px;
@@ -458,12 +529,28 @@ z-index: 10001;
 }
 
 @keyframes clock-shake {
-0% { transform: rotate(0deg); }
-20% { transform: rotate(10deg); }
-40% { transform: rotate(-10deg); }
-60% { transform: rotate(10deg); }
-80% { transform: rotate(-10deg); }
-100% { transform: rotate(0deg); }
+  0% { transform: rotate(0deg); }
+  20% { transform: rotate(10deg); }
+  40% { transform: rotate(-10deg); }
+  60% { transform: rotate(10deg); }
+  80% { transform: rotate(-10deg); }
+  100% { transform: rotate(0deg); }
 }
+
+@keyframes bubble-pop {
+  0% {
+    transform: translateX(-50%) scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: translateX(-50%) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+  }
+}
+
 
 </style>
