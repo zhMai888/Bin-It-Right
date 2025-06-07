@@ -14,17 +14,35 @@
       v-for="(item, index) in garbageList"
       :key="item.id"
       class="garbage"
-      :class="{ selected: selectedGarbage === item.id }"
+      :class="{ selected: selectedGarbage === item.id, 'fade-out': item.fade }"
       :style="{ left: item.x + 'px', top: item.y + 'px' }"
       @click.stop="selectGarbage(item.id)"
     >
-      <span v-if="!garbageMap.get(item.id) || !garbageMap.get(item.id).landed">🗑️</span>
-      <span v-else><img src="../assets/turnover.png" alt="" class="turnover"></span>
+      <img
+        v-if="!garbageMap.get(item.id) || !garbageMap.get(item.id).landed"
+        :src="item.img"
+        alt="trash"
+        style="width: 100px; height: 100px; pointer-events: none;"
+        draggable = false;
+      >
+      <img
+        v-else
+        src="../assets/turnover.png"
+        alt=""
+        class="turnover"
+        draggable = false;
+      >
     </div>
 
 
     <!-- 抛垃圾的手 -->
-    <div class="hand" :style="{ bottom: handBottom + 'px' }">🤾</div>
+    <div
+      class="hand"
+      :style="{ left: handLeft + 'px', bottom: handBottom + 'px' }"
+      :class="handClasses"
+    >
+      <img :src="hand" alt="" style="width: 250px; height: 130px;">
+    </div>
 
     <!-- 垃圾桶 -->
     <div class="bins">
@@ -36,7 +54,7 @@
         @click="throwGarbage(bin.type)"
       >
         <img :src="bin.img" :alt="bin.label" draggable="false" style="width: 200px; height: 250px;">
-        <div class="bin-emotion" v-if="bin.emotion">
+        <div class="bin-emotion" v-if="bin.emotion" :style="{ color: bin.correct ? 'green' : 'red' }">
           {{ bin.emotion }}
         </div>
       </div>
@@ -90,6 +108,10 @@ export default {
       ],
       happy: ['😄','😆','ヾ(≧▽≦*)o','\^o^/','<(￣︶￣)↗[GOOD!]','(´▽`ʃ♡ƪ)','fantastic','unbelievable'],
       sad: ['😢', '💔','💢','(╥﹏╥)','(｡•́︿•̀｡)','(¬_¬")', '＞﹏＜','(╯︵╰,)', 'sad', 'careful'],
+      hand: require('../assets/hand.png'),
+      isHandShaking: false,
+      handLeft: -300,
+      showHand: false,
       centerX: window.innerWidth / 2,
       centerY: window.innerHeight / 2,
       currentStartY: 0,
@@ -100,10 +122,10 @@ export default {
       garbageTypes: ['shop', 'recycle', 'nonerecyle', 'hazardous', 'kichen'],
       idCounter: 1,
       animationFrameId: null,
-      change_speed: 0.15,
+      change_speed: 0.1,
       score: 0,
-      best_score: 10,
-      leasetime: 10,
+      best_score: 0,
+      leasetime: 60,
       gameOver: false,
       showTimeout: false,
       showFirework: false,
@@ -112,9 +134,6 @@ export default {
   mounted() {
     window.addEventListener('resize', this.updateCenter);
     this.updateCenter();
-    if (this.garbageList.length === 0) {
-        this.throwMultipleGarbage();
-    }
     let that = this
     setInterval(() => {
       if (this.leasetime > 0) {
@@ -128,7 +147,7 @@ export default {
         if (this.garbageList.length === 0) {
         this.throwMultipleGarbage();
         }
-    }, 7000);
+    }, 2000);
 
     this.startAnimation();
   },
@@ -139,6 +158,11 @@ export default {
   computed: {
     handBottom() {
       return window.innerHeight - this.currentStartY;
+    },
+    handClasses() {
+      return {
+        shaking: this.isHandShaking
+      }
     },
     leasetimeStyle() {
       const time = this.leasetime;
@@ -213,10 +237,11 @@ export default {
             }
             meta.landed = true;
 
-            // 2秒后移除
+            this.$set(g, 'fade', true); // 添加淡出效果
+            // 2.5秒后移除
             setTimeout(() => {
               this.removeGarbage(g.id);
-            }, 2500);
+            }, 4500);
           }
         }
 
@@ -225,15 +250,24 @@ export default {
 
       animate();
     },
+    shakeHand() {
+      return new Promise(resolve => {
+        this.isHandShaking = true;
+        setTimeout(() => {
+          this.isHandShaking = false;
+          resolve();
+        }, 600);
+      });
+    },
 
-    throwMultipleGarbage() {
+    async throwMultipleGarbage() {
       const handMinBottom = 0.2;
       const handMaxBottom = 0.5;
       const screenHeight = window.innerHeight;
 
       let startBottom;
       do {
-          startBottom = Math.random() * (handMaxBottom - handMinBottom) * screenHeight + handMinBottom * screenHeight;
+        startBottom = Math.random() * (handMaxBottom - handMinBottom) * screenHeight + handMinBottom * screenHeight;
       } while (Math.abs(startBottom - this.lastStartBottom) < 0.1 * screenHeight);
 
       this.lastStartBottom = startBottom;
@@ -247,32 +281,53 @@ export default {
       const heightDelta = this.currentStartY - maxHeight;
       this.currentVy = -Math.sqrt(2 * gravity * heightDelta);
 
+      // 伸手
+      this.handLeft = -300;
+      this.showHand = true;
+
+      setTimeout(() => {
+        this.handLeft = -20;  
+      }, 50);
+      await new Promise(res => setTimeout(res, 400));
+
       for (let i = 0; i < 3; i++) {
+        await this.shakeHand();
+
+        // 生成垃圾
+        let garbageCount = Math.floor(Math.random() * 2) + 2;
+        for (let j = 0; j < garbageCount; j++) {
           setTimeout(() => {
-          let garbageCount = Math.floor(Math.random() * 2) + 2;
-          for (let j = 0; j < garbageCount; j++) {
-              setTimeout(() => {
-              this.generateGarbage();
-              }, j * 200);
-          }
-          }, i * 1500);
+            this.generateGarbage();
+          }, j * 200);
+        }
+
+        if (i < 2) {
+          await new Promise(res => setTimeout(res, 650)); 
+        }
       }
+      // 收手
+      setTimeout(async () => {
+        this.handLeft = -300;
+        await new Promise(res => setTimeout(res, 400));
+        this.showHand = false;
+      }, 1000);
     },
 
     generateGarbage() {
-      const type = this.garbageTypes[Math.floor(Math.random() * 4)];
+      const selectedTrash = this.trash[Math.floor(Math.random() * this.trash.length)];
       const id = this.idCounter++;
-      const startX = 80;
-      const startY = this.currentStartY + 15;
+      const startX = 100;
+      const startY = this.currentStartY + 15 - 130;
 
       const gravity = 0.5 * (this.change_speed * this.change_speed );
       const timeToFall = 2 * Math.abs(this.currentVy) / gravity;
       const vx = (Math.random() * 5 + 6) * this.change_speed;
-      const vy = this.currentVy * 0.7 * this.change_speed;
+      const vy = this.currentVy * 0.75 * this.change_speed;
 
       const garbage = {
         id,
-        type,
+        type: this.garbageTypes[selectedTrash.typeid - 1],  // typeid从1开始
+        img: selectedTrash.img,  // ✅ 添加垃圾图片
         x: startX,
         y: startY
       };
@@ -284,8 +339,11 @@ export default {
         time: 0
       });
     },
-
     selectGarbage(id) {
+      const meta = this.garbageMap.get(id);
+      if (meta && meta.landed) {
+        return; 
+      }
       this.selectedGarbage = this.selectedGarbage === id ? null : id;
     },
     clearSelection() {
@@ -307,13 +365,16 @@ export default {
         if (g.type === binType) {
           this.score += 1;
           matchedBin.emotion = this.happy[Math.floor(Math.random() * this.happy.length)];
+          matchedBin.correct = true;
         } else {
           this.score -= 1;
           matchedBin.emotion = this.sad[Math.floor(Math.random() * this.sad.length)];
+          matchedBin.correct = false;
         }
 
         setTimeout(() => {
           matchedBin.emotion = null; 
+          matchedBin.correct = null;
         }, 1500);
 
         this.removeGarbage(g.id);
@@ -336,16 +397,48 @@ export default {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: #f0fff0;
+  background: url('../assets/gameBackground.png') no-repeat;
+  background-size: 100% 100%;
 }
 
-/* 手的位置固定在左下角 */
+/* 手的位置 */
 .hand {
   position: absolute;
   bottom: 80px;
-  left: 40px;
-  font-size: 40px;
+  left: -300px;
+  transition: left 0.4s ease;
+  z-index: 10;
 }
+
+@keyframes hand-throw {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    animation-timing-function: ease-in;
+  }
+  30% {
+    transform: translateY(20px) rotate(15deg);
+    animation-timing-function: ease-out;
+  }
+  60% {
+    transform: translateY(-30px) rotate(-20deg);
+    animation-timing-function: ease-in-out;
+  }
+  90% {
+    transform: translateY(5px) rotate(5deg);
+    animation-timing-function: ease-out;
+  }
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+
+.hand.shaking {
+  animation: hand-throw 1s ease forwards;
+  animation-iteration-count: 2;
+  animation-delay: 0.1s; 
+}
+
 
 /* 垃圾样式 */
 .garbage {
@@ -360,6 +453,11 @@ export default {
 .garbage.selected {
   transform: scale(1.5);
   filter: brightness(130%);
+}
+
+.garbage.fade-out {
+  opacity: 0;
+  transition: opacity 4s ease;
 }
 
 /* 垃圾桶区域 */
@@ -392,6 +490,7 @@ export default {
 .turnover {
   width: 100px;
   height: 60px;
+  pointer-events: none;
 }
 .score1{
   position: absolute;
