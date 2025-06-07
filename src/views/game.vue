@@ -1,92 +1,99 @@
 <template>
   <div class="game-container" @click.self="clearSelection">
-    <!-- 上边区域 -->
-    <div>
-      <span class="score1">♻️</span>
-      <span class="score2">{{score}}</span>
-    </div>
-    <div>
-      <span class="score3">BEST: {{best_score}}</span>
-    </div>
-    <div class="leasetime" :style="leasetimeStyle">{{leasetime}}s</div>
-    <!-- 垃圾区域 -->
-    <div
-      v-for="(item, index) in garbageList"
-      :key="item.id"
-      class="garbage"
-      :class="{ selected: selectedGarbage === item.id, 'fade-out': item.fade }"
-      :style="{ left: item.x + 'px', top: item.y + 'px' }"
-      @click.stop="selectGarbage(item.id)"
-    >
-      <img
-        v-if="!garbageMap.get(item.id) || !garbageMap.get(item.id).landed"
-        :src="item.img"
-        alt="trash"
-        style="width: 100px; height: 100px; pointer-events: none;"
-        draggable = false;
-      >
-      <img
-        v-else
-        src="../assets/turnover.png"
-        alt=""
-        class="turnover"
-        draggable = false;
-      >
-    </div>
-
-
-    <!-- 抛垃圾的手 -->
-    <div
-      class="hand"
-      :style="{ left: handLeft + 'px', bottom: handBottom + 'px' }"
-      :class="handClasses"
-    >
-      <img :src="hand" alt="" style="width: 250px; height: 130px;">
-    </div>
-
-    <!-- 垃圾桶 -->
-    <div class="bins">
+    <!-- 开始游戏倒计时 -->
+    <Countdown />
+    <div v-if="gameStarted">
+      <!-- 上边区域 -->
+      <div>
+        <span class="score1">♻️</span>
+        <span class="score2">{{score}}</span>
+      </div>
+      <div>
+        <span class="score3">BEST: {{best_score}}</span>
+      </div>
+      <div class="leasetime" :style="leasetimeStyle">{{leasetime}}s</div>
+      <!-- 垃圾区域 -->
       <div
-        v-for="bin in bins"
-        :key="bin.id"
-        class="bin"
-        :class="{ 'has-emotion': bin.emotion }"
-        @click="throwGarbage(bin.type)"
+        v-for="(item, index) in garbageList"
+        :key="item.id"
+        class="garbage"
+        :class="{ selected: selectedGarbage === item.id, 'fade-out': item.fade }"
+        :style="{ left: item.x + 'px', top: item.y + 'px' }"
+        @click.stop="selectGarbage(item.id)"
       >
-        <img :src="bin.img" :alt="bin.label" draggable="false" style="width: 200px; height: 250px;">
-        <div class="bin-emotion" v-if="bin.emotion" :style="{ color: bin.correct ? 'green' : 'red' }">
-          {{ bin.emotion }}
+        <img
+          v-if="!garbageMap.get(item.id) || !garbageMap.get(item.id).landed"
+          :src="item.img"
+          alt="trash"
+          style="width: 100px; height: 100px; pointer-events: none;"
+          draggable = false;
+        >
+        <img
+          v-else
+          src="../assets/turnover.png"
+          alt=""
+          class="turnover"
+          draggable = false;
+        >
+      </div>
+
+
+      <!-- 抛垃圾的手 -->
+      <div
+        class="hand"
+        :style="{ left: handLeft + 'px', bottom: handBottom + 'px' }"
+        :class="handClasses"
+      >
+        <img :src="hand" alt="" style="width: 250px; height: 130px;">
+      </div>
+
+      <!-- 垃圾桶 -->
+      <div class="bins">
+        <div
+          v-for="bin in bins"
+          :key="bin.id"
+          class="bin"
+          :class="{ 'has-emotion': bin.emotion }"
+          @click="throwGarbage(bin.type)"
+        >
+          <img :src="bin.img" :alt="bin.label" draggable="false" style="width: 200px; height: 250px;">
+          <div class="bin-emotion" v-if="bin.emotion" :style="{ color: bin.correct ? 'green' : 'red' }">
+            {{ bin.emotion }}
+          </div>
         </div>
       </div>
-    </div>
-    <div v-if="gameOver" class="overlay">
-      <div v-if="showTimeout" class="timeout-text">
-        <p v-if="best_score>=score"><span class="timeout-clock">⏰</span> Time out!</p>
-        <p v-else><span class="timeout-clock2">🎉</span> Congratulations!</p>
+      <div v-if="gameOver" class="overlay">
+        <div v-if="showTimeout" class="timeout-text">
+          <p v-if="best_score>=score"><span class="timeout-clock">⏰</span> Time out!</p>
+          <p v-else><span class="timeout-clock2">🎉</span> Congratulations!</p>
+        </div>
+        <Firework
+          v-if="showFirework"
+          :particleCount="180"
+          :angle="90"
+          :spread="130"
+          :startVelocity="55"
+          :ticks="1000"
+          :colors="['#ff4b4b', '#ffd700', '#00e5ff', '#00ff7f', '#ff69b4']"
+          :x="centerX"
+          :y="centerY"
+        />
       </div>
-      <Firework
-        v-if="showFirework"
-        :particleCount="180"
-        :angle="90"
-        :spread="130"
-        :startVelocity="55"
-        :ticks="1000"
-        :colors="['#ff4b4b', '#ffd700', '#00e5ff', '#00ff7f', '#ff69b4']"
-        :x="centerX"
-        :y="centerY"
-      />
     </div>
   </div>
 </template>
 
 <script>
 import Firework from '@/components/fireworks/fireworks.vue'
+import Countdown from '@/components/countdown/countdown.vue'
 export default {
   components: {
-    Firework
+    Firework,
+    Countdown
   },
   data() {
     return {
+      gameStarted: false,
       bins: [
         { id: 1, type: 'shop', label: '商店' , img: "", emotion: null},
         { id: 2, type: 'recycle', label: '可回收' , img: require('../assets/bin/recyclable.png'), emotion: null},
@@ -125,7 +132,7 @@ export default {
       change_speed: 0.1,
       score: 0,
       best_score: 0,
-      leasetime: 60,
+      leasetime: 64,
       gameOver: false,
       showTimeout: false,
       showFirework: false,
@@ -144,8 +151,8 @@ export default {
     }, 1000);
 
     setInterval(() => {
-        if (this.garbageList.length === 0) {
-        this.throwMultipleGarbage();
+        if (this.garbageList.length === 0 && this.gameStarted && !this.gameOver) {
+          this.throwMultipleGarbage();
         }
     }, 2000);
 
@@ -180,7 +187,15 @@ export default {
       };
     }
   },
+  created() {
+    this.onCountdownEnd();
+  },
   methods: {
+    onCountdownEnd() {
+      setTimeout(() => {
+        this.gameStarted = true;
+      }, 4000);
+    },
     updateCenter() {
       this.centerX = window.innerWidth / 2;
       this.centerY = window.innerHeight / 2;

@@ -1,18 +1,68 @@
-body {
-    background-image: linear-gradient(to top, #e6e9f0 0%, #eef1f5 100%);
-	font-family: 'Microsoft YaHei','Lantinghei SC','Open Sans',Arial,'Hiragino Sans GB','STHeiti','WenQuanYi Micro Hei','SimSun',sans-serif;
-    margin: 0;
-	height: 100vh;
-}
+<template>
+  <div>
+    <div :class="['counter', { hide: hideCounter }]">
+      <div class="nums">
+        <span 
+          v-for="(num, idx) in nums" 
+          :key="idx"
+          :class="spanClass(idx)"
+          @animationend="handleAnimationEnd($event, idx)"
+        >
+          {{ num }}
+        </span>
+      </div>
+    </div>
+    <div :class="['final', { show: showFinal }]">
+      <p style="font-size: 90px; font-weight: bolder; color: #1abc9c;">Start!!!</p>
+    </div>
+  </div>
+</template>
 
-button {
-    display: block;
-    width: 100%;
-    padding: 6px 0;
-    border: 0 none;
-    color: #fff;
-    background-color: #4d90fe;
-    cursor: pointer;
+<script>
+export default {
+  data() {
+    return {
+      nums: [3, 2, 1],
+      spanStates: [], 
+      hideCounter: false,
+      showFinal: false,
+    };
+  },
+  mounted() {
+    this.resetDOM();
+  },
+  methods: {
+    spanClass(idx) {
+      return this.spanStates[idx];
+    },
+    resetDOM() {
+      this.hideCounter = false;
+      this.showFinal = false;
+      this.spanStates = this.nums.map(() => '');
+      this.spanStates[0] = 'in';
+    },
+    handleAnimationEnd(e, idx) {
+      const penultimate = this.nums.length - 1;
+      if (e.animationName === 'goIn' && idx !== penultimate) {
+        this.$set(this.spanStates, idx, 'out');
+      } else if (e.animationName === 'goOut' && this.spanStates[idx + 1] !== undefined) {
+        this.$set(this.spanStates, idx + 1, 'in');
+      } else {
+        this.hideCounter = true;
+        this.showFinal = true;
+      }
+      setTimeout(() => {
+        this.showFinal = false;
+      }, 1000);
+    }
+  }
+};
+</script>
+
+<style>
+body {
+  margin: 0;
+	height: 100vh;
 }
 
 .counter {
@@ -65,12 +115,12 @@ button {
 }
 
 .nums {
-	color: #3498db;
+	color: #1abc9c;
 	position: relative;
-	font-size: 50px;
+	font-size: 100px;
 	overflow: hidden;
 	width: 250px;
-	height: 50px;
+	height: 100px;
 }
 
 .nums span {
@@ -147,3 +197,4 @@ footer a {
 	color: #3C97BF;
 	text-decoration: none;
 }
+</style>
