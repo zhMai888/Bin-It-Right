@@ -1,83 +1,107 @@
 <template>
   <div class="game-container" @click.self="clearSelection">
-    <!-- 开始游戏倒计时 -->
-    <Countdown />
-    <div v-if="gameStarted">
-      <!-- 上边区域 -->
-      <div>
-        <span class="score1">♻️</span>
-        <span class="score2">{{score}}</span>
-      </div>
-      <div>
-        <span class="score3">BEST: {{best_score}}</span>
-      </div>
-      <div class="leasetime" :style="leasetimeStyle">{{leasetime}}s</div>
-      <!-- 垃圾区域 -->
-      <div
-        v-for="(item, index) in garbageList"
-        :key="item.id"
-        class="garbage"
-        :class="{ selected: selectedGarbage === item.id, 'fade-out': item.fade }"
-        :style="{ left: item.x + 'px', top: item.y + 'px' }"
-        @click.stop="selectGarbage(item.id)"
-      >
-        <img
-          v-if="!garbageMap.get(item.id) || !garbageMap.get(item.id).landed"
-          :src="item.img"
-          alt="trash"
-          style="width: 100px; height: 100px; pointer-events: none;"
-          draggable = false;
+    <!-- 开始游戏前的提示 -->
+    <GameIntro v-if="!gameIntro" :onConfirmed="handleIntroComplete" />
+    <div v-if="gameIntro">
+      <!-- 开始游戏倒计时 -->
+      <Countdown />
+      <div v-if="gameStarted">
+        <!-- 上边区域 -->
+        <div>
+          <span class="score1">♻️</span>
+          <span class="score2">{{score}}</span>
+        </div>
+        <div>
+          <span class="score3">BEST: {{best_score}}</span>
+        </div>
+        <div class="leasetime" :style="leasetimeStyle">{{leasetime}}s</div>
+        <!-- 奖励显示区域 -->
+        <transition
+          name="fade"
+          @after-leave="onLeave"
         >
-        <img
-          v-else
-          src="../assets/turnover.png"
-          alt=""
-          class="turnover"
-          draggable = false;
+          <img src="../assets/bonusTime.png" alt="Bonus Time" class="bonus" v-if="this.binggoNum > 9">
+        </transition>
+        <transition
+          name="fade"
+          @after-leave="onLeave"
         >
-      </div>
-
-
-      <!-- 抛垃圾的手 -->
-      <div
-        class="hand"
-        :style="{ left: handLeft + 'px', bottom: handBottom + 'px' }"
-        :class="handClasses"
-      >
-        <img :src="hand" alt="" style="width: 250px; height: 130px;">
-      </div>
-
-      <!-- 垃圾桶 -->
-      <div class="bins">
+          <span
+            v-if="this.binggoNum > 4"
+            class="score4"
+            :class="{ animated: animateScore }"
+            @animationend="animateScore = false"
+          >
+            X {{ binggoNum }}
+          </span>
+        </transition>
+        <!-- 垃圾区域 -->
         <div
-          v-for="bin in bins"
-          :key="bin.id"
-          class="bin"
-          :class="{ 'has-emotion': bin.emotion }"
-          @click="throwGarbage(bin.type)"
+          v-for="(item, index) in garbageList"
+          :key="item.id"
+          class="garbage"
+          :class="{ selected: selectedGarbage === item.id, 'fade-out': item.fade }"
+          :style="{ left: item.x + 'px', top: item.y + 'px' }"
+          @click.stop="selectGarbage(item.id)"
         >
-          <img :src="bin.img" :alt="bin.label" draggable="false" style="width: 200px; height: 250px;">
-          <div class="bin-emotion" v-if="bin.emotion" :style="{ color: bin.correct ? 'green' : 'red' }">
-            {{ bin.emotion }}
+          <img
+            v-if="!garbageMap.get(item.id) || !garbageMap.get(item.id).landed"
+            :src="item.img"
+            alt="trash"
+            style="width: 100px; height: 100px; pointer-events: none;"
+            draggable = false;
+          >
+          <img
+            v-else
+            src="../assets/turnover.png"
+            alt=""
+            class="turnover"
+            draggable = false;
+          >
+        </div>
+
+
+        <!-- 抛垃圾的手 -->
+        <div
+          class="hand"
+          :style="{ left: handLeft + 'px', bottom: handBottom + 'px' }"
+          :class="handClasses"
+        >
+          <img :src="hand" alt="" style="width: 250px; height: 130px;" draggable="false">
+        </div>
+
+        <!-- 垃圾桶 -->
+        <div class="bins">
+          <div
+            v-for="bin in bins"
+            :key="bin.id"
+            class="bin"
+            :class="{ 'has-emotion': bin.emotion }"
+            @click="throwGarbage(bin.type)"
+          >
+            <img :src="bin.img" :alt="bin.label" draggable="false" style="width: 200px; height: 250px;">
+            <div class="bin-emotion" v-if="bin.emotion" :style="{ color: bin.correct ? 'green' : 'red' }">
+              {{ bin.emotion }}
+            </div>
           </div>
         </div>
-      </div>
-      <div v-if="gameOver" class="overlay">
-        <div v-if="showTimeout" class="timeout-text">
-          <p v-if="best_score>=score"><span class="timeout-clock">⏰</span> Time out!</p>
-          <p v-else><span class="timeout-clock2">🎉</span> Congratulations!</p>
+        <div v-if="gameOver" class="overlay">
+          <div v-if="showTimeout" class="timeout-text">
+            <p v-if="best_score>=score"><span class="timeout-clock">⏰</span> Time out!</p>
+            <p v-else><span class="timeout-clock2">🎉</span> Congratulations!</p>
+          </div>
+          <Firework
+            v-if="showFirework"
+            :particleCount="180"
+            :angle="90"
+            :spread="130"
+            :startVelocity="55"
+            :ticks="1000"
+            :colors="['#ff4b4b', '#ffd700', '#00e5ff', '#00ff7f', '#ff69b4']"
+            :x="centerX"
+            :y="centerY"
+          />
         </div>
-        <Firework
-          v-if="showFirework"
-          :particleCount="180"
-          :angle="90"
-          :spread="130"
-          :startVelocity="55"
-          :ticks="1000"
-          :colors="['#ff4b4b', '#ffd700', '#00e5ff', '#00ff7f', '#ff69b4']"
-          :x="centerX"
-          :y="centerY"
-        />
       </div>
     </div>
   </div>
@@ -86,13 +110,16 @@
 <script>
 import Firework from '@/components/fireworks/fireworks.vue'
 import Countdown from '@/components/countdown/countdown.vue'
+import GameIntro from '@/components/gameIntro/gameIntro.vue';
 export default {
   components: {
     Firework,
-    Countdown
+    Countdown,
+    GameIntro
   },
   data() {
     return {
+      gameIntro: false,
       gameStarted: false,
       bins: [
         { id: 1, type: 'shop', label: '商店' , img: "", emotion: null},
@@ -132,18 +159,33 @@ export default {
       change_speed: 0.1,
       score: 0,
       best_score: 0,
-      leasetime: 64,
+      leasetime: 64,  // 多4秒用来平衡倒计时时间
       gameOver: false,
       showTimeout: false,
       showFirework: false,
+      binggoNum: 0,   // 连续正确次数
+      factors: 1,      // 奖励系数
+      showBingo: false,
+      animateScore: false
     };
+  },
+  watch: {
+    binggoNum(newVal, oldVal) {
+      if (newVal > 4 && newVal !== oldVal) {
+        // 重置动画类（即使重复数值也能再次动画）
+        this.animateScore = false;
+        this.$nextTick(() => {
+          this.animateScore = true;
+        });
+      }
+    }
   },
   mounted() {
     window.addEventListener('resize', this.updateCenter);
     this.updateCenter();
     let that = this
     setInterval(() => {
-      if (this.leasetime > 0) {
+      if (this.leasetime > 0 && this.gameIntro) {
         this.leasetime--;
       } else if (this.leasetime === 0 && !this.showTimeout && !this.gameOver) {
         that.triggerTimeout();
@@ -187,14 +229,14 @@ export default {
       };
     }
   },
-  created() {
-    this.onCountdownEnd();
-  },
   methods: {
-    onCountdownEnd() {
+    handleIntroComplete() {
+      this.gameIntro = true;
       setTimeout(() => {
         this.gameStarted = true;
       }, 4000);
+    },
+    onLeave() {
     },
     updateCenter() {
       this.centerX = window.innerWidth / 2;
@@ -205,7 +247,7 @@ export default {
       this.showTimeout = true;
       cancelAnimationFrame(this.animationFrameId);
       setTimeout(()=>{
-        this.showFirework = this.score >= this.best_score;
+        this.showFirework = this.score > this.best_score;
       }, 1000);
       setTimeout(() => {
         this.showTimeout = false;
@@ -342,7 +384,7 @@ export default {
       const garbage = {
         id,
         type: this.garbageTypes[selectedTrash.typeid - 1],  // typeid从1开始
-        img: selectedTrash.img,  // ✅ 添加垃圾图片
+        img: selectedTrash.img,  // 添加垃圾图片
         x: startX,
         y: startY
       };
@@ -378,13 +420,20 @@ export default {
         const g = this.garbageList[index];
 
         if (g.type === binType) {
-          this.score += 1;
+          this.score += this.factors;
+          this.binggoNum += 1;
           matchedBin.emotion = this.happy[Math.floor(Math.random() * this.happy.length)];
           matchedBin.correct = true;
         } else {
           this.score -= 1;
+          this.binggoNum = 0;
+          this.factors = 1;
           matchedBin.emotion = this.sad[Math.floor(Math.random() * this.sad.length)];
           matchedBin.correct = false;
+        }
+
+        if (this.binggoNum >= 10) {
+          this.factors = 2;
         }
 
         setTimeout(() => {
@@ -543,6 +592,60 @@ export default {
   -webkit-text-fill-color: transparent; 
   z-index: 10;
   user-select: none;
+}
+@font-face {
+  font-family: 'HongLeiXingShu';
+  src: url('../assets/font/HongLeiXingShu.OTF') format('truetype');
+}
+.score4{
+  position: absolute;
+  font-weight: bolder;
+  font-family: "HongLeiXingShu";
+  top: 300px;
+  right: 60px;
+  font-size: 60px;
+  background: linear-gradient(to bottom, #951f18, #67140b);
+  background-clip: text;             
+  -webkit-background-clip: text;    
+  color: transparent;
+  -webkit-text-fill-color: transparent; 
+  z-index: 10;
+  user-select: none;
+  transition: transform 0.3s ease;
+}
+
+.score4.animated {
+  animation: pulse 0.3s ease;
+}
+
+.bonus {
+  position: absolute;
+  top: 200px;
+  right: 20px;
+  width: 200px;
+  height: 100px;
+  z-index: 10;
+  transition: transform 0.3s ease;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.4s ease;
+}
+
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.5);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 .leasetime {
   position: absolute;

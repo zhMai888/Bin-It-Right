@@ -53,7 +53,7 @@ export default {
       }
       setTimeout(() => {
         this.showFinal = false;
-      }, 1000);
+      }, 1900);
     }
   }
 };
