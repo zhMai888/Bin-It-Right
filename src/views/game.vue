@@ -7,14 +7,22 @@
       <Countdown />
       <div v-if="gameStarted">
         <!-- 上边区域 -->
-        <div>
-          <span class="score1">♻️</span>
-          <span class="score2">{{score}}</span>
+        <div v-if="this.gamemodel==='local'">
+          <div>
+            <span class="score1">♻️</span>
+            <span class="score2">{{score}}</span>
+          </div>
+          <div>
+            <span class="score3">BEST: {{best_score}}</span>
+          </div>
+          <div class="leasetime" :style="leasetimeStyle">{{leasetime}}s</div>
         </div>
-        <div>
-          <span class="score3">BEST: {{best_score}}</span>
+        <div v-else>
+          <div class="leasetimeOnline" :style="leasetimeStyle">{{leasetime}}s</div>
+          <div class="scoreMyself">{{score}}</div>
+          <div class="scorerival">{{scorerival}}</div>
+          <img src="../assets/scoreboard.png" alt="" class="scoreboard" draggable="false">
         </div>
-        <div class="leasetime" :style="leasetimeStyle">{{leasetime}}s</div>
         <!-- 奖励显示区域 -->
         <transition
           name="fade"
@@ -86,21 +94,42 @@
           </div>
         </div>
         <div v-if="gameOver" class="overlay">
-          <div v-if="showTimeout" class="timeout-text">
-            <p v-if="best_score>=score"><span class="timeout-clock">⏰</span> Time out!</p>
-            <p v-else><span class="timeout-clock2">🎉</span> Congratulations!</p>
+          <div v-if="this.gamemodel==='local'">
+            <div v-if="showTimeout" class="timeout-text">
+              <p v-if="best_score>=score"><span class="timeout-clock">⏰</span> Time out!</p>
+              <p v-else><span class="timeout-clock2">🎉</span> Congratulations!</p>
+            </div>
+            <Firework
+              v-if="showFirework"
+              :particleCount="180"
+              :angle="90"
+              :spread="130"
+              :startVelocity="55"
+              :ticks="1000"
+              :colors="['#ff4b4b', '#ffd700', '#00e5ff', '#00ff7f', '#ff69b4']"
+              :x="centerX"
+              :y="centerY"
+            />
           </div>
-          <Firework
-            v-if="showFirework"
-            :particleCount="180"
-            :angle="90"
-            :spread="130"
-            :startVelocity="55"
-            :ticks="1000"
-            :colors="['#ff4b4b', '#ffd700', '#00e5ff', '#00ff7f', '#ff69b4']"
-            :x="centerX"
-            :y="centerY"
-          />
+          <div v-else>
+            <div v-if="showTimeout" class="timeout-text">
+              <p v-if="score > scorerival"><span class="timeout-clock2">🎉</span> Congratulations!</p>
+              <p v-else-if="score === scorerival"><span class="timeout-clock">🤝</span> Draw Level!</p>
+              <p v-else><span class="timeout-clock2">💀</span> Defeat!</p>
+            </div>
+            <Firework
+              v-if="showFirework"
+              :particleCount="180"
+              :angle="90"
+              :spread="130"
+              :startVelocity="55"
+              :ticks="1000"
+              :colors="['#ff4b4b', '#ffd700', '#00e5ff', '#00ff7f', '#ff69b4']"
+              :x="centerX"
+              :y="centerY"
+            />
+            <Rain v-if="showRain"/>
+          </div>
         </div>
       </div>
     </div>
@@ -111,14 +140,17 @@
 import Firework from '@/components/fireworks/fireworks.vue'
 import Countdown from '@/components/countdown/countdown.vue'
 import GameIntro from '@/components/gameIntro/gameIntro.vue';
+import Rain from '@/components/rain/rain.vue';
 export default {
   components: {
     Firework,
     Countdown,
-    GameIntro
+    GameIntro,
+    Rain
   },
   data() {
     return {
+      gamemodel: null,
       gameIntro: false,
       gameStarted: false,
       bins: [
@@ -158,11 +190,13 @@ export default {
       animationFrameId: null,
       change_speed: 0.1,
       score: 0,
+      scorerival: 0,
       best_score: 0,
       leasetime: 64,  // 多4秒用来平衡倒计时时间
       gameOver: false,
       showTimeout: false,
       showFirework: false,
+      showRain: false,
       binggoNum: 0,   // 连续正确次数
       factors: 1,      // 奖励系数
       showBingo: false,
@@ -179,6 +213,14 @@ export default {
         });
       }
     }
+  },
+  created() {
+    // 得到游戏模式    
+    if (!this.$route.params.value || (this.$route.params.value !== 'local' && this.$route.params.value !== 'online')) {
+      this.$router.push({ name: 'login' });
+      return;
+    }
+    this.gamemodel = this.$route.params.value;
   },
   mounted() {
     window.addEventListener('resize', this.updateCenter);
@@ -247,11 +289,19 @@ export default {
       this.showTimeout = true;
       cancelAnimationFrame(this.animationFrameId);
       setTimeout(()=>{
-        this.showFirework = this.score > this.best_score;
+        if (this.gamemodel === 'local') {
+          this.showFirework = this.score > this.best_score;
+        } else {
+          this.showFirework = this.score > this.scorerival;
+        }
+        if (this.gamemodel === 'online') {
+          this.showRain = this.score < this.scorerival;
+        }
       }, 1000);
       setTimeout(() => {
         this.showTimeout = false;
         this.showFirework = false;
+        this.showRain = false;
       }, 5000);
     },
     mixColor(c1, c2, ratio) {
@@ -465,6 +515,17 @@ export default {
   background-size: 100% 100%;
 }
 
+/* online记分牌 */
+.scoreboard{
+  position: absolute;
+  top: -90px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 300px;
+  z-index: -2;
+}
+
 /* 手的位置 */
 .hand {
   position: absolute;
@@ -579,6 +640,38 @@ export default {
   z-index: 10;
   user-select: none;
 }
+.scoreMyself{
+  position: absolute;
+  font-weight: bolder;
+  top: 100px;
+  left: 39%;
+  transform: translateX(50%);
+  font-size: 70px;
+  font-family: "HongLeiXingShu";
+  background: red;
+  background-clip: text;             
+  -webkit-background-clip: text;    
+  color: transparent;
+  -webkit-text-fill-color: transparent; 
+  z-index: -1;
+  user-select: none;
+}
+.scorerival{
+  position: absolute;
+  font-weight: bolder;
+  top: 100px;
+  right: 42%;
+  transform: translateX(50%);
+  font-size: 70px;
+  font-family: "HongLeiXingShu";
+  background: red;
+  background-clip: text;             
+  -webkit-background-clip: text;    
+  color: transparent;
+  -webkit-text-fill-color: transparent; 
+  z-index: -1;
+  user-select: none;
+}
 .score3{
   position: absolute;
   font-weight: bolder;
@@ -654,6 +747,17 @@ export default {
   right: 25px;
   font-size: 60px;
   z-index: 10;
+  user-select: none;
+}
+.leasetimeOnline{
+  position: absolute;
+  font-weight: bolder;
+  font-family: "HongLeiXingShu";
+  top: 110px;
+  right: 50%;
+  transform: translateX(50%);
+  font-size: 35px;
+  z-index: -1;
   user-select: none;
 }
 .overlay {
