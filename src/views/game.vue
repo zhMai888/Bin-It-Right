@@ -130,6 +130,19 @@
             />
             <Rain v-if="showRain"/>
           </div>
+          <div v-if="showMistake" class="mistake-container">
+            <img src="../assets/mistakeboard.png" alt="" class="mistakeboard" draggable="false">
+            <div class="mistake-content">
+              <h2 style="position: absolute; top: -5%; left: 50%; transform: translateX(-50%);">Mistake Record</h2>
+              <div style=" width: 670px; height: 330px; overflow-y: auto; margin-top: 8%;">
+                <ul class="mistake-list" v-for="(item, index) in mistake" :key="index">
+                  <li>
+                    <img :src="item" alt="mistake trash">
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -192,7 +205,7 @@ export default {
       score: 0,
       scorerival: 0,
       best_score: 0,
-      leasetime: 64,  // 多4秒用来平衡倒计时时间
+      leasetime: 12,  // 多4秒用来平衡倒计时时间
       gameOver: false,
       showTimeout: false,
       showFirework: false,
@@ -200,7 +213,9 @@ export default {
       binggoNum: 0,   // 连续正确次数
       factors: 1,      // 奖励系数
       showBingo: false,
-      animateScore: false
+      animateScore: false,
+      mistake: [],  // 错误垃圾记录
+      showMistake: false
     };
   },
   watch: {
@@ -302,6 +317,14 @@ export default {
         this.showTimeout = false;
         this.showFirework = false;
         this.showRain = false;
+        this.mistake = [...new Set(this.mistake)];
+        this.showMistake = this.mistake.length > 0;
+
+
+        console.log(this.mistake);
+
+
+
       }, 5000);
     },
     mixColor(c1, c2, ratio) {
@@ -478,6 +501,7 @@ export default {
           this.score -= 1;
           this.binggoNum = 0;
           this.factors = 1;
+          this.mistake.push(g.img); // 记录错误垃圾图片地址(唯一定位)
           matchedBin.emotion = this.sad[Math.floor(Math.random() * this.sad.length)];
           matchedBin.correct = false;
         }
@@ -834,6 +858,40 @@ z-index: 10001;
   opacity: 1;
   transform: translateX(-50%) scale(1.1);
   animation: bubble-pop 0.4s ease-out;
+}
+
+.mistakeboard{
+  position: absolute;
+  display: block;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1000px;
+  height: 700px;
+  z-index: -1;
+}
+
+.mistake-container {
+  position: relative;
+  width: fit-content;
+}
+
+.mistake-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  z-index: 1001;
+}
+
+.mistake-list img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  z-index: 1002;
 }
 
 

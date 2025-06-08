@@ -16,10 +16,12 @@
       };
     },
     mounted() {
-      this.setupCanvas();
-      this.createRaindrops();
-      this.animate();
-      window.addEventListener("resize", this.onResize);
+      this.$nextTick(() => {
+        this.setupCanvas();
+        this.createRaindrops();
+        this.animate();
+        window.addEventListener("resize", this.onResize);
+      });
     },
     beforeUnmount() {
       window.removeEventListener("resize", this.onResize);
@@ -28,6 +30,9 @@
     methods: {
       setupCanvas() {
         const canvas = this.$refs.canvas;
+        if (!canvas) {
+          return;
+        }
         canvas.width = this.width;
         canvas.height = this.height;
         this.ctx = canvas.getContext("2d");
