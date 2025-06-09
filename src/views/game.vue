@@ -155,12 +155,25 @@
                     </ul>
                   </div>
                 </div>
-                <button @click="BackHomeClick" class="backhomeButton">
-                  <img src="../assets/backhome.png" alt="" style="width: 30px !important; height: 30px !important;">
-                </button>
+                <div>
+                  <button @click="BackHomeClick" class="backhomeButton">
+                    <img src="../assets/backhome.png" alt="" style="width: 30px !important; height: 30px !important;">
+                  </button>
+                  <button @click="againClick" class="againButton">
+                    <img src="../assets/again.png" alt="" style="width: 30px !important; height: 30px !important;">
+                  </button>
+                </div>
               </div>
             </div>
           </div> 
+          <div v-if="showNoMistake">
+            <button @click="BackHomeClick" class="backhomeButton2">
+              <img src="../assets/backhome.png" alt="" style="width: 40px !important; height: 40px !important;">
+            </button>
+            <button @click="againClick" class="againButton2">
+              <img src="../assets/again.png" alt="" style="width: 40px !important; height: 40px !important;">
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -234,6 +247,7 @@ export default {
       animateScore: false,
       mistake: [],  // 错误垃圾记录
       showMistake: false,
+      showNoMistake: false
     };
   },
   watch: {
@@ -305,6 +319,9 @@ export default {
     }
   },
   methods: {
+    againClick(){
+      location.reload();
+    },
     BackHomeClick(){
       location.replace('/');
     },
@@ -354,7 +371,7 @@ export default {
             return trashItem ? { ...trashItem } : null;
           }).filter(item => item !== null);
         }else{
-          location.replace('/');
+          this.showNoMistake = true;
         }
       }, 5000);
     },
@@ -972,11 +989,59 @@ z-index: 10001;
   width: 50px;
   height: 50px;
   position: relative;
-  left: 53%;
+  left: 56%;
   top: 2%;
 }
 
 .backhomeButton :hover {
+  cursor: pointer;
+  filter: brightness(120%);
+}
+
+.backhomeButton2{
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  background-color: #c0392b;
+  position: absolute;
+  top: 50%;
+  left: 60%;
+  transform: translate(-50%, -50%);
+  width: 100px;
+  height: 100px;
+}
+
+.backhomeButton2 :hover {
+  cursor: pointer;
+  filter: brightness(120%);
+}
+
+.againButton{
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  background-color: #16a085;
+  width: 50px;
+  height: 50px;
+  position: relative;
+  left: 49%;
+  top: -60px;
+}
+.againButton :hover {
+  cursor: pointer;
+  filter: brightness(120%);
+}
+
+.againButton2{
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  background-color: #16a085;
+  position: absolute;
+  top: 50%;
+  left: 40%;
+  transform: translate(-50%, -50%);
+  width: 100px;
+  height: 100px;
+}
+.againButton2 :hover {
   cursor: pointer;
   filter: brightness(120%);
 }
