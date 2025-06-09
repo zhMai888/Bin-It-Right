@@ -120,7 +120,7 @@ body {
 	font-size: 100px;
 	overflow: hidden;
 	width: 250px;
-	height: 100px;
+	height: 95px;
 }
 
 .nums span {
