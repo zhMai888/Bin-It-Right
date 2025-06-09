@@ -134,15 +134,33 @@
             <img src="../assets/mistakeboard.png" alt="" class="mistakeboard" draggable="false">
             <div class="mistake-content">
               <h2 style="position: absolute; top: -5%; left: 50%; transform: translateX(-50%);">Mistake Record</h2>
-              <div style=" width: 670px; height: 330px; overflow-y: auto; margin-top: 8%;">
-                <ul class="mistake-list" v-for="(item, index) in mistake" :key="index">
-                  <li>
-                    <img :src="item" alt="mistake trash">
-                  </li>
-                </ul>
+              <div style="width: 700px; height: 380px;">
+                <div style="width: 670px; margin-top: 8%;">
+                  <div class="mistake-row header">
+                    <div class="col image">Picture</div>
+                    <div class="col name">Name</div>
+                    <div class="col type">Type</div>
+                    <div class="col desc">Introduction</div>
+                  </div>
+                  <div style="height: 300px; overflow-y: auto;">
+                    <ul class="mistake-list">
+                      <li v-for="(item, index) in mistake" :key="index" class="mistake-row">
+                        <div class="col image"><img :src="item.img" alt="mistake trash" /></div>
+                        <div class="col name">{{ item.name }}</div>
+                        <div class="col type">
+                          {{ item.typeid === 1 ? 'shop' : item.typeid === 2 ? 'recyclable waste' : item.typeid === 3 ? 'unrecyclable waste' : item.typeid === 4 ? 'hazardous waste' : 'kichen waste' }}
+                        </div>
+                        <div class="col desc">{{ item.description }}</div>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <button @click="BackHomeClick" class="backhomeButton">
+                  <img src="../assets/backhome.png" alt="" style="width: 30px !important; height: 30px !important;">
+                </button>
               </div>
             </div>
-          </div>
+          </div> 
         </div>
       </div>
     </div>
@@ -174,16 +192,16 @@ export default {
         { id: 5, type: 'kichen', label: '厨余' , img: require("../assets/bin/kitchen_waste.png"), emotion: null}
       ],
       trash: [
-        {id: 1, img: require("../assets/trash/bananapeel.png"), typeid: 5},
-        {id: 2, img: require("../assets/trash/bone.png"), typeid: 5},
-        {id: 3, img: require("../assets/trash/cigarette.png"), typeid: 4},
-        {id: 4, img: require("../assets/trash/eggshell.png"), typeid: 5},
-        {id: 5, img: require("../assets/trash/fishbone.png"), typeid: 5},
-        {id: 6, img: require("../assets/trash/lighter.png"), typeid: 3},
-        {id: 7, img: require("../assets/trash/orangepeel.png"), typeid: 5},
-        {id: 8, img: require("../assets/trash/shabbyclothes.png"), typeid: 2},
-        {id: 9, img: require("../assets/trash/tissue.png"), typeid: 3},
-        {id: 10, img: require("../assets/trash/watermelonpeel.png"), typeid: 5},
+        {id: 1, img: require("../assets/trash/bananapeel.png"), typeid: 5, name: 'banana peel', description: 'banana peel is kitchen waste, can be composted.'},
+        {id: 2, img: require("../assets/trash/bone.png"), typeid: 5, name: 'bone', description: 'bone is kitchen waste, can be composted.'},
+        {id: 3, img: require("../assets/trash/cigarette.png"), typeid: 4, name: 'cigarette', description: 'cigarette butts are hazardous waste, should be disposed of properly.'},
+        {id: 4, img: require("../assets/trash/eggshell.png"), typeid: 5, name: 'egg shell', description: 'egg shells are kitchen waste, can be composted.'},
+        {id: 5, img: require("../assets/trash/fishbone.png"), typeid: 5, name: 'fish bone', description: 'fish bones are kitchen waste, can be composted.'},
+        {id: 6, img: require("../assets/trash/lighter.png"), typeid: 3, name: 'lighter', description: 'lighter is non-recyclable waste, should be disposed of properly.'},
+        {id: 7, img: require("../assets/trash/orangepeel.png"), typeid: 5, name: 'orange peel', description: 'orange peels are kitchen waste, can be composted.'},
+        {id: 8, img: require("../assets/trash/shabbyclothes.png"), typeid: 2, name: 'shabby clothes', description: 'shabby clothes are recyclable waste, can be donated or recycled.'},
+        {id: 9, img: require("../assets/trash/tissue.png"), typeid: 3, name: 'tissue', description: 'tissue is non-recyclable waste, should be disposed of properly.'},
+        {id: 10, img: require("../assets/trash/watermelonpeel.png"), typeid: 5, name: 'watermelon peel', description: 'watermelon peels are kitchen waste, can be composted.'},
       ],
       happy: ['😄','😆','ヾ(≧▽≦*)o','\^o^/','<(￣︶￣)↗[GOOD!]','(´▽`ʃ♡ƪ)','fantastic','unbelievable'],
       sad: ['😢', '💔','💢','(╥﹏╥)','(｡•́︿•̀｡)','(¬_¬")', '＞﹏＜','(╯︵╰,)', 'sad', 'careful'],
@@ -215,7 +233,7 @@ export default {
       showBingo: false,
       animateScore: false,
       mistake: [],  // 错误垃圾记录
-      showMistake: false
+      showMistake: false,
     };
   },
   watch: {
@@ -287,6 +305,9 @@ export default {
     }
   },
   methods: {
+    BackHomeClick(){
+      location.replace('/');
+    },
     handleIntroComplete() {
       this.gameIntro = true;
       setTimeout(() => {
@@ -320,11 +341,21 @@ export default {
         this.mistake = [...new Set(this.mistake)];
         this.showMistake = this.mistake.length > 0;
 
+        if (this.showMistake){
+            this.mistake = this.mistake.map(imgPath => {
+            const match = imgPath.match(/\/img\/([^/.]+)\./);
+            if (!match) return null;
+            const fileNameNoExt = match[1];
+            const trashItem = this.trash.find(t => {
+              const nameNoSpace = t.name.replace(/\s+/g, '').toLowerCase();
+              return nameNoSpace === fileNameNoExt.toLowerCase();
+            });
 
-        console.log(this.mistake);
-
-
-
+            return trashItem ? { ...trashItem } : null;
+          }).filter(item => item !== null);
+        }else{
+          location.replace('/');
+        }
       }, 5000);
     },
     mixColor(c1, c2, ratio) {
@@ -598,9 +629,10 @@ export default {
   pointer-events: auto;
   user-select: none;
   -webkit-user-drag: none;
+  transform: scale(1.4);
 }
 .garbage.selected {
-  transform: scale(1.5);
+  transform: scale(1.9);
   filter: brightness(130%);
 }
 
@@ -876,22 +908,77 @@ z-index: 10001;
   width: fit-content;
 }
 
+.mistake-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.mistake-row.header {
+  font-weight: bold;
+  font-size: 18px;
+  border-bottom: 3px solid #888;
+  margin-bottom: 5px;
+}
+
 .mistake-list {
   list-style: none;
   padding: 0;
   margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  z-index: 1001;
 }
 
-.mistake-list img {
+.col {
+  box-sizing: border-box;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.col.image {
+  width: 100px;
+  padding-inline: 0;
+  flex-shrink: 0;
+}
+
+.col.image img {
   width: 100px;
   height: 100px;
   object-fit: contain;
-  z-index: 1002;
+}
+
+.col.name {
+  width: 150px;
+  flex-shrink: 0;
+}
+
+.col.type {
+  width: 160px;
+  flex-shrink: 0;
+}
+
+.col.desc {
+  flex: 1;
+  white-space: normal;
+  overflow: auto; 
+}
+
+.backhomeButton{
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  background-color: #c0392b;
+  width: 50px;
+  height: 50px;
+  position: relative;
+  left: 53%;
+  top: 2%;
+}
+
+.backhomeButton :hover {
+  cursor: pointer;
+  filter: brightness(120%);
 }
 
 
