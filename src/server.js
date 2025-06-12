@@ -1,9 +1,27 @@
 const express = require('express');
+const app = express();
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const os = require('os');
 
-const app = express();
+// 获取本地IP地址
+app.get('/get-local-ip', (req, res) => {
+  const interfaces = os.networkInterfaces();
+  let localIp = '127.0.0.1';
+  
+  for (const interfaceName in interfaces) {
+    const iface = interfaces[interfaceName];
+    for (const alias of iface) {
+      if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
+        localIp = alias.address;
+        break;
+      }
+    }
+  }
+  
+  res.json({ ip: localIp });
+});
 app.use(cors());
 
 const server = http.createServer(app);
@@ -34,6 +52,13 @@ app.get('/create-room', (req, res) => {
   const roomId = generateRoomId();
   createdRooms.push(roomId);
   res.send({ success: true, roomId });
+});
+
+// 验证房间是否存在
+app.get('/check-room', (req, res) => {
+  const { roomId } = req.query;
+  const exists = createdRooms.includes(roomId);
+  res.send({ success: exists });
 });
 
 // 加入房间
