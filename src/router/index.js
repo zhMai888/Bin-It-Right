@@ -1,17 +1,26 @@
 import Vue, { KeepAlive } from 'vue'
 import VueRouter from 'vue-router'
-import login from '../components/start.vue'
-import game from '../views/game.vue'
+import start from '../views/start.vue'
+import game from '../views/game.vue';
+import GameModeSelection from '../views/GameModeSelection.vue';
 
 Vue.use(VueRouter)
 
 const routes = [
   {
     path: '/',
-    name: 'login',
-    component: login,
+    name: 'start',
+    component: start,
     meta: {
       requireAuth: false
+    }
+  },
+  {
+    path: '/gameModeSelection',
+    name: 'GameModeSelection',
+    component: GameModeSelection,
+    meta: {
+      requireAuth: true
     }
   },
   {

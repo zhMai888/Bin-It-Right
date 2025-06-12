@@ -167,8 +167,8 @@ export default {
         this.showLogin = true;
         return;
       }
-      // 跳转到游戏界面
-      this.$router.push({ name: 'Game' });
+      // 跳转到游戏模式选择界面
+      this.$router.push({ name: 'GameModeSelection' });
     },
     goToPokedex() {
       // 跳转到图鉴界面
