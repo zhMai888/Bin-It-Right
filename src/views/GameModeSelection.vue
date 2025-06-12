@@ -40,7 +40,7 @@ import io from 'socket.io-client';
 // }
 async function getLocalNetworkIP() {
   try {
-    const response = await axios.get('http://localhost:3000/get-client-ip');
+    const response = await axios.get('http://localhost:3000/get-local-ip');
     return response.data.ip;
   } catch (error) {
     console.error('获取局域网 IP 失败:', error);
@@ -69,36 +69,36 @@ export default {
       // 实现单人游戏逻辑
     },
     async createRoom() {
-      try {
-        const ip = await getLocalNetworkIP();
-        const response = await axios.get(`http://${ip}:3000/create-room`);
-        this.roomId = response.data.roomId;
-        socket.emit('join_room', this.roomId);
-      } catch (error) {
-        console.error('创建房间失败:', error);
-      }
-    },
+  try {
+    const ip = await getLocalNetworkIP();
+    const response = await axios.get(`http://${ip}:3000/create-room`);
+    this.roomId = response.data.roomId;
+    socket.emit('join_room', this.roomId);
+  } catch (error) {
+    console.error('创建房间失败:', error);
+  }
+},
     joinRoom() {
       this.showJoinInput = true;
     },
     async confirmJoinRoom() {
-      try {
-        const ip = await getLocalNetworkIP();
-        const response = await axios.get(`http://${ip}:3000/join-room`, {
-          params: {
-            roomId: this.joinRoomId
-          }
-        });
-        if (response.data.success) {
-          socket.emit('join_room', this.joinRoomId);
-          // 加入房间成功后的逻辑
-        } else {
-          console.error('加入房间失败:', response.data.message);
-        }
-      } catch (error) {
-        console.error('加入房间时出错:', error);
+  try {
+    const ip = await getLocalNetworkIP();
+    const response = await axios.get(`http://${ip}:3000/join-room`, {
+      params: {
+        roomId: this.joinRoomId
       }
+    });
+    if (response.data.success) {
+      socket.emit('join_room', this.joinRoomId);
+      // 加入房间成功后的逻辑
+    } else {
+      console.error('加入房间失败:', response.data.message);
     }
+  } catch (error) {
+    console.error('加入房间时出错:', error);
+  }
+}
   }
 }
 </script>

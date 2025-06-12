@@ -1,9 +1,15 @@
 const express = require('express');
+const cors = require('cors');
 const app = express();
 const http = require('http');
 const { Server } = require('socket.io');
-const cors = require('cors');
 const os = require('os');
+app.use(cors({
+  origin: 'http://localhost:8080',
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
+
 
 // 获取本地IP地址
 app.get('/get-local-ip', (req, res) => {
@@ -22,7 +28,7 @@ app.get('/get-local-ip', (req, res) => {
   
   res.json({ ip: localIp });
 });
-app.use(cors());
+
 
 const server = http.createServer(app);
 const io = new Server(server, {
