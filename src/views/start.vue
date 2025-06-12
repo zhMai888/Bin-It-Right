@@ -149,11 +149,12 @@ export default {
         { id: 5, username: '自然之子', score: 5430 },
         { id: 6, username: '新用户', score: 1230 }
       ],
-      // 模拟已注册用户
-      registeredUsers: [
-        { username: 'test', password: 'test123', email: 'test@example.com' }
-      ]
+      registeredUsers: [] // 初始化为空，实际数据从本地文件加载
     }
+  },
+  created() {
+    // 页面加载时尝试读取本地用户信息
+    this.loadUsers();
   },
   computed: {
     sortedLeaderboard() {
@@ -161,6 +162,44 @@ export default {
     }
   },
   methods: {
+    // 读取本地用户信息
+    loadUsers() {
+      try {
+        const fs = window.require ? window.require('fs') : null;
+        const path = window.require ? window.require('path') : null;
+        if (fs && path) {
+          const userPath = path.join(__dirname, '../../user-data.json');
+          if (fs.existsSync(userPath)) {
+            const data = fs.readFileSync(userPath, 'utf-8');
+            this.registeredUsers = JSON.parse(data);
+          }
+        } else {
+          // 浏览器环境，使用localStorage
+          const data = localStorage.getItem('eco_users');
+          if (data) {
+            this.registeredUsers = JSON.parse(data);
+          }
+        }
+      } catch (e) {
+        this.registeredUsers = [];
+      }
+    },
+    // 保存本地用户信息
+    saveUsers() {
+      try {
+        const fs = window.require ? window.require('fs') : null;
+        const path = window.require ? window.require('path') : null;
+        if (fs && path) {
+          const userPath = path.join(__dirname, '../../user-data.json');
+          fs.writeFileSync(userPath, JSON.stringify(this.registeredUsers, null, 2), 'utf-8');
+        } else {
+          // 浏览器环境，使用localStorage
+          localStorage.setItem('eco_users', JSON.stringify(this.registeredUsers));
+        }
+      } catch (e) {
+        alert('用户信息保存失败！');
+      }
+    },
     goToGame() {
       if (!this.currentUser) {
         alert('请先登录再开始游戏');
@@ -171,20 +210,19 @@ export default {
       this.$router.push({ name: 'GameModeSelection' });
     },
     goToPokedex() {
-      // 跳转到图鉴界面
       this.$router.push({ name: 'Pokedex' });
     },
     exitGame() {
       this.gameStarted = false;
-      // 这里可以添加游戏退出的逻辑
       console.log('游戏退出');
     },
     handleLogin() {
+      // 登录时读取最新用户信息
+      this.loadUsers();
       const user = this.registeredUsers.find(
-        u => u.username === this.loginForm.username && 
+        u => u.username === this.loginForm.username &&
              u.password === this.loginForm.password
       );
-      
       if (user) {
         this.currentUser = {
           username: user.username,
@@ -198,27 +236,26 @@ export default {
       }
     },
     handleRegister() {
+      // 注册时读取最新用户信息
+      this.loadUsers();
       const usernameExists = this.registeredUsers.some(
         u => u.username === this.registerForm.username
       );
-      
       if (usernameExists) {
         alert('用户名已存在！');
         return;
       }
-      
       this.registeredUsers.push({
         username: this.registerForm.username,
         password: this.registerForm.password,
         email: this.registerForm.email
       });
-      
+      this.saveUsers();
       this.leaderboard.push({
         id: this.leaderboard.length + 1,
         username: this.registerForm.username,
         score: 0
       });
-      
       this.showRegister = false;
       this.registerForm = { username: '', password: '', email: '' };
       alert('注册成功！请登录。');
