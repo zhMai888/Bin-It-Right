@@ -1,6 +1,6 @@
 import Vue, { KeepAlive } from 'vue'
 import VueRouter from 'vue-router'
-import login from '../views/login.vue'
+import login from '../components/start.vue'
 import game from '../views/game.vue'
 
 Vue.use(VueRouter)

@@ -23,10 +23,16 @@
       <div class="game-controls">
         <button 
           class="start-btn" 
-          @click="startGame"
+          @click="goToGame"
           :disabled="!currentUser"
         >
-          {{ gameStarted ? '继续游戏' : '开始游戏' }}
+          开始游戏
+        </button>
+        <button 
+          class="pokedex-btn"
+          @click="goToPokedex"
+        >
+          图鉴
         </button>
         <button 
           class="exit-btn" 
@@ -155,15 +161,18 @@ export default {
     }
   },
   methods: {
-    startGame() {
+    goToGame() {
       if (!this.currentUser) {
         alert('请先登录再开始游戏');
         this.showLogin = true;
         return;
       }
-      this.gameStarted = true;
-      // 这里可以添加游戏开始的逻辑，比如路由跳转到游戏页面
-      console.log('游戏开始');
+      // 跳转到游戏界面
+      this.$router.push({ name: 'Game' });
+    },
+    goToPokedex() {
+      // 跳转到图鉴界面
+      this.$router.push({ name: 'Pokedex' });
     },
     exitGame() {
       this.gameStarted = false;
@@ -226,14 +235,15 @@ export default {
 <style scoped>
 .eco-game-home {
   font-family: 'Segoe UI', 'Arial', sans-serif;
-  max-width: 1000px;
+  width: 900px;
+  min-height: 650px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 20px;
-  color: #222; /* 主字体颜色加深 */
-  background: linear-gradient(135deg, #e0f7fa 0%, #f0f8ff 100%);
-  min-height: 100vh;
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-  border-radius: 18px;
+  padding: 0;
+  color: #222;
+  /* 背景全屏显示且固定，组件居中，背景不随内容缩放 */
+  position: relative;
+  z-index: 1;
 }
 
 .header {
@@ -332,6 +342,25 @@ export default {
 
 .exit-btn:not(:disabled):hover {
   background: linear-gradient(90deg, #f09819 0%, #ff5858 100%);
+}
+
+.pokedex-btn {
+  padding: 18px 0;
+  font-size: 1.25em;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 2px 12px rgba(67, 233, 123, 0.10);
+  transition: all 0.3s;
+  background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+  color: #ffffffe5;
+  margin-bottom: 10px;
+}
+
+.pokedex-btn:hover {
+  background: linear-gradient(90deg, #00f2fe 0%, #4facfe 100%);
+  transform: scale(1.06);
 }
 
 .leaderboard {
@@ -514,5 +543,17 @@ form button:hover {
   .leaderboard, .game-controls {
     padding: 12px;
   }
+}
+</style>
+<style>
+body, html, #app {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  /* 背景图全屏显示且固定 */
+  background: url('/src/assets/background/1000.jpg') no-repeat center center fixed;
+  background-size: cover;
+  overflow: hidden;
 }
 </style>
