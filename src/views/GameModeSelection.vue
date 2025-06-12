@@ -3,7 +3,7 @@
     <h1>选择游戏模式</h1>
     <button class="game-btn" @click="goToSinglePlayer">单人游戏</button>
     <button class="game-btn" @click="createRoom(); showJoinInput = false">创建房间</button>
-    <span v-if="roomId" class="room-id" style="display: block;">房间号: {{ roomId }}</span>
+    <span v-if="roomId" class="room-id">房间号: {{ roomId }}</span>
     <button class="game-btn" @click="joinRoom">加入房间</button>
     <div v-if="showJoinInput" class="join-room-input-group">
       <input v-model="joinRoomId" type="text" placeholder="请输入房间码">
@@ -16,72 +16,84 @@
 import axios from 'axios';
 import io from 'socket.io-client';
 
-async function getLocalNetworkIP() {
-  try {
-    const response = await axios.get('http://localhost:3000/get-client-ip');
-    return response.data.ip;
-  } catch (error) {
-    console.error('获取局域网 IP 失败:', error);
-    return '127.0.0.1';
-  }
-}
-let socket;
-
-async function initSocket() {
-  const ip = await getLocalNetworkIP();
-  socket = io(`http://${ip}:3000`);
-}
-
-initSocket();
+let socket = null;
 
 export default {
   data() {
     return {
       roomId: null,
       showJoinInput: false,
-      joinRoomId: ''
-    }
+      joinRoomId: '',
+    };
+  },
+  mounted() {
+    socket = io("http://localhost:3000");
+
+    socket.on('message', (msg) => {
+      console.log('收到消息:', msg);
+    });
+
+    socket.on('error', (err) => {
+      console.error('Socket错误:', err);
+    });
   },
   methods: {
     goToSinglePlayer() {
-      // 实现单人游戏逻辑
+      console.log('进入单人模式');
     },
     async createRoom() {
-  try {
-    const ip = await getLocalNetworkIP();
-    const response = await axios.get(`http://${ip}:3000/create-room`);
-    this.roomId = response.data.roomId;
-    socket.emit('join_room', this.roomId);
-  } catch (error) {
-    console.error('创建房间失败:', error);
-  }
-},
+      try {
+        const response = await axios.get(`http://localhost:3000/create-room`);
+        this.roomId = response.data.roomId;
+        socket.emit('join-room', this.roomId);
+      } catch (err) {
+        console.error('创建房间失败:', err);
+      }
+    },
     joinRoom() {
       this.showJoinInput = true;
     },
     async confirmJoinRoom() {
-  try {
-    const ip = await getLocalNetworkIP();
-    const response = await axios.get(`http://${ip}:3000/join-room`, {
-      params: {
-        roomId: this.joinRoomId
+      try {
+        const response = await axios.get(`http://localhost:3000/join-room`, {
+          params: { roomId: this.joinRoomId }
+        });
+
+        if (response.data.success) {
+          socket.emit('join-room', this.joinRoomId); 
+          console.log('成功加入房间:', this.joinRoomId);
+        } else {
+          alert(response.data.message);
+        }
+      } catch (err) {
+        console.error('加入房间失败:', err);
       }
-    });
-    if (response.data.success) {
-      socket.emit('join_room', this.joinRoomId);
-      // 加入房间成功后的逻辑
-    } else {
-      console.error('加入房间失败:', response.data.message);
     }
-  } catch (error) {
-    console.error('加入房间时出错:', error);
   }
-}
-  }
-}
+};
 </script>
 
 <style scoped>
+.game-mode-selection {
+  text-align: center;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.room-id {
+  margin-top: 10px;
+  padding: 18px 0;
+  font-size: 1.25em;
+  border: none;
+  border-radius: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 12px rgba(67, 233, 123, 0.10);
+  background: white;
+  color: #000;
+  width: 200px;
+}
 .join-room-input-group {
   width: 200px;
   display: flex;
@@ -96,29 +108,6 @@ export default {
   text-align: center;
   box-shadow: 0 2px 12px rgba(67, 233, 123, 0.10);
 }
-
-.game-mode-selection {
-  text-align: center;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-}
-.game-mode-selection .room-id {
-  margin-top: 10px;
-  padding: 18px 0;
-  font-size: 1.25em;
-  border: none;
-  border-radius: 12px;
-  font-weight: bold;
-  box-shadow: 0 2px 12px rgba(67, 233, 123, 0.10);
-  background: white;
-  color: #000;
-  width: 200px;
-  margin-top: -10px;
-}
-
 button {
   padding: 18px 0;
   font-size: 1.25em;
@@ -132,7 +121,6 @@ button {
   color: #ffffffe5;
   width: 200px;
 }
-
 button:hover {
   background: linear-gradient(90deg, #38f9d7 0%, #43e97b 100%);
   transform: scale(1.06);

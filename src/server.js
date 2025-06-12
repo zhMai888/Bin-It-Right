@@ -1,64 +1,81 @@
 const express = require('express');
-const os = require('os');
+const http = require('http');
+const { Server } = require('socket.io');
 const cors = require('cors');
+
 const app = express();
 app.use(cors());
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
 const port = 3000;
 
-// 存储已创建的房间号
+// 房间列表
 const createdRooms = [];
 
-// 生成 4 位字母房间号
+// 生成 4 位房间号
 function generateRoomId() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let result = '';
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const charactersLength = characters.length;
   for (let i = 0; i < 4; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
 }
 
-function getLocalIPAddress() {
-  const interfaces = os.networkInterfaces();
-  for (const name in interfaces) {
-    for (const iface of interfaces[name]) {
-      // 只取 IPv4 且不是内部地址（internal === false）
-      if (iface.family === 'IPv4' && !iface.internal) {
-        return iface.address;
-      }
-    }
-  }
-  return '127.0.0.1';
-}
-
-// 连接房间接口
-app.all('/join-room', (req, res) => {
-  const { roomId } = req.query;
-  // 验证房间号是否存在
-  const isRoomExists = createdRooms.includes(roomId);
-  if (isRoomExists) {
-    res.send({ message: `成功连接到房间 ${roomId}`, success: true });
-  } else {
-    res.send({ message: `房间 ${roomId} 不存在`, success: false });
-  }
-  res.send({ message: `尝试连接到房间 ${roomId}`, success: true });
-});
-
-// 创建房间接口
-app.all('/create-room', (req, res) => {
+// 创建房间
+app.get('/create-room', (req, res) => {
   const roomId = generateRoomId();
-  // 将新创建的房间号添加到数组中
   createdRooms.push(roomId);
-  res.send({ roomId });
+  res.send({ success: true, roomId });
 });
 
-// 获取客户端 IP 接口
-app.all('/get-client-ip', (req, res) => {
-  const ip = getLocalIPAddress();
-  res.json({ ip });
+// 加入房间
+app.get('/join-room', (req, res) => {
+  const { roomId } = req.query;
+  if (createdRooms.includes(roomId)) {
+    return res.send({ success: true, message: `成功连接到房间 ${roomId}` });
+  }
+  return res.send({ success: false, message: `房间 ${roomId} 不存在` });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+// Socket.IO
+io.on('connection', (socket) => {
+  socket.on('join-room', (roomId) => {
+    if (createdRooms.includes(roomId)) {
+      socket.join(roomId);
+      console.log(`Socket ${socket.id} 加入了房间 ${roomId}`);
+
+      // 统计当前房间人数
+      const clientsInRoom = io.sockets.adapter.rooms.get(roomId);
+      const numClients = clientsInRoom ? clientsInRoom.size : 0;
+      console.log(numClients);
+      
+      if (numClients === 1) {
+        // 创建通知
+        socket.emit('message', `创建房间 ${roomId} 成功`);
+      } else {
+        // 加入通知
+        io.to(roomId).emit('message', `欢迎新成员加入房间 ${roomId}`);
+      }
+    } else {
+      socket.emit('error', `房间 ${roomId} 不存在`);
+    }
+  });
+
+  socket.on('message', ({ roomId, message }) => {
+    io.to(roomId).emit('message', message);
+  });
+});
+
+
+// 启动服务器并监听所有网卡
+server.listen(port, '0.0.0.0', () => {
+  console.log(`服务器运行在 http://localhost:${port}`);
 });
