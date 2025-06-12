@@ -16,32 +16,41 @@
 import axios from 'axios';
 import io from 'socket.io-client';
 
-function getLocalIP() {
-  return new Promise((resolve) => {
-    const RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
-    if (!RTCPeerConnection) {
-      resolve('localhost');
-      return;
-    }
-    const pc = new RTCPeerConnection({ iceServers: [] });
-    pc.createDataChannel('');
-    pc.createOffer().then((offer) => pc.setLocalDescription(offer));
-    pc.onicecandidate = (event) => {
-      if (!event.candidate) return;
-      const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/;
-      const match = event.candidate.candidate.match(ipRegex);
-      if (match) {
-        resolve(match[1]);
-        pc.close();
-      }
-    };
-  });
-}
 
+// function getLocalIP() {
+//   return new Promise((resolve) => {
+//     const RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+//     if (!RTCPeerConnection) {
+//       resolve('localhost');
+//       return;
+//     }
+//     const pc = new RTCPeerConnection({ iceServers: [] });
+//     pc.createDataChannel('');
+//     pc.createOffer().then((offer) => pc.setLocalDescription(offer));
+//     pc.onicecandidate = (event) => {
+//       if (!event.candidate) return;
+//       const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/;
+//       const match = event.candidate.candidate.match(ipRegex);
+//       if (match) {
+//         resolve(match[1]);
+//         pc.close();
+//       }
+//     };
+//   });
+// }
+async function getLocalNetworkIP() {
+  try {
+    const response = await axios.get('http://localhost:3000/get-client-ip');
+    return response.data.ip;
+  } catch (error) {
+    console.error('获取局域网 IP 失败:', error);
+    return '127.0.0.1';
+  }
+}
 let socket;
 
 async function initSocket() {
-  const ip = await getLocalIP();
+  const ip = await getLocalNetworkIP();
   socket = io(`http://${ip}:3000`);
 }
 
@@ -60,36 +69,36 @@ export default {
       // 实现单人游戏逻辑
     },
     async createRoom() {
-      try {
-        const ip = await getLocalIP();
-        const response = await axios.get(`http://${ip}:3000/create-room`);
-        this.roomId = response.data.roomId;
-        socket.emit('join_room', this.roomId);
-      } catch (error) {
-        console.error('创建房间失败:', error);
-      }
-    },
+  try {
+    const ip = await getLocalNetworkIP();
+    const response = await axios.get(`http://${ip}:3000/create-room`);
+    this.roomId = response.data.roomId;
+    socket.emit('join_room', this.roomId);
+  } catch (error) {
+    console.error('创建房间失败:', error);
+  }
+},
     joinRoom() {
       this.showJoinInput = true;
     },
     async confirmJoinRoom() {
-      try {
-        const ip = await getLocalIP();
-        const response = await axios.get(`http://${ip}:3000/join-room`, {
-          params: {
-            roomId: this.joinRoomId
-          }
-        });
-        if (response.data.success) {
-          socket.emit('join_room', this.joinRoomId);
-          // 加入房间成功后的逻辑
-        } else {
-          console.error('加入房间失败:', response.data.message);
-        }
-      } catch (error) {
-        console.error('加入房间时出错:', error);
+  try {
+    const ip = await getLocalNetworkIP();
+    const response = await axios.get(`http://${ip}:3000/join-room`, {
+      params: {
+        roomId: this.joinRoomId
       }
+    });
+    if (response.data.success) {
+      socket.emit('join_room', this.joinRoomId);
+      // 加入房间成功后的逻辑
+    } else {
+      console.error('加入房间失败:', response.data.message);
     }
+  } catch (error) {
+    console.error('加入房间时出错:', error);
+  }
+}
   }
 }
 </script>

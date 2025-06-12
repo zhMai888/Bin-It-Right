@@ -214,7 +214,7 @@ export default {
         {id: 7, img: require("../assets/trash/orangepeel.png"), typeid: 5, name: 'orange peel', description: 'orange peels are kitchen waste, can be composted.'},
         {id: 8, img: require("../assets/trash/shabbyclothes.png"), typeid: 2, name: 'shabby clothes', description: 'shabby clothes are recyclable waste, can be donated or recycled.'},
         {id: 9, img: require("../assets/trash/tissue.png"), typeid: 3, name: 'tissue', description: 'tissue is non-recyclable waste, should be disposed of properly.'},
-        {id: 10, img: require("../assets/trash/watermelonpeel.png"), typeid: 5, name: 'watermelon peel', description: 'watermelon peels are kitchen waste, can be composted.'},
+        {id: 10, img: require("../assets/trash/watermelonskin.png"), typeid: 5, name: 'watermelon skin', description: 'watermelon skins are kitchen waste, can be composted.'},
       ],
       happy: ['😄','😆','ヾ(≧▽≦*)o','\^o^/','<(￣︶￣)↗[GOOD!]','(´▽`ʃ♡ƪ)','fantastic','unbelievable'],
       sad: ['😢', '💔','💢','(╥﹏╥)','(｡•́︿•̀｡)','(¬_¬")', '＞﹏＜','(╯︵╰,)', 'sad', 'careful'],
