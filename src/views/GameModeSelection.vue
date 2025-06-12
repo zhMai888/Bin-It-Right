@@ -16,28 +16,6 @@
 import axios from 'axios';
 import io from 'socket.io-client';
 
-
-// function getLocalIP() {
-//   return new Promise((resolve) => {
-//     const RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
-//     if (!RTCPeerConnection) {
-//       resolve('localhost');
-//       return;
-//     }
-//     const pc = new RTCPeerConnection({ iceServers: [] });
-//     pc.createDataChannel('');
-//     pc.createOffer().then((offer) => pc.setLocalDescription(offer));
-//     pc.onicecandidate = (event) => {
-//       if (!event.candidate) return;
-//       const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/;
-//       const match = event.candidate.candidate.match(ipRegex);
-//       if (match) {
-//         resolve(match[1]);
-//         pc.close();
-//       }
-//     };
-//   });
-// }
 async function getLocalNetworkIP() {
   try {
     const response = await axios.get('http://localhost:3000/get-client-ip');
