@@ -47,14 +47,14 @@ async function getLocalNetworkIP() {
     return '127.0.0.1';
   }
 }
-// let socket;
+let socket;
 
-// async function initSocket() {
-//   const ip = await getLocalNetworkIP();
-//   socket = io(`http://${ip}:3000`);
-// }
+async function initSocket() {
+  const ip = await getLocalNetworkIP();
+  socket = io(`http://${ip}:3000`);
+}
 
-// initSocket();
+initSocket();
 
 export default {
   data() {
@@ -69,15 +69,15 @@ export default {
       // 实现单人游戏逻辑
     },
     async createRoom() {
-  try {
-    const ip = await getLocalNetworkIP();
-    const response = await axios.get(`http://${ip}:3000/create-room`);
-    this.roomId = response.data.roomId;
-    socket.emit('join_room', this.roomId);
-  } catch (error) {
-    console.error('创建房间失败:', error);
-  }
-},
+      try {
+        const ip = await getLocalNetworkIP();
+        const response = await axios.get(`http://${ip}:3000/create-room`);
+        this.roomId = response.data.roomId;
+        socket.emit('join_room', this.roomId);
+      } catch (error) {
+        console.error('创建房间失败:', error);
+      }
+    },
     joinRoom() {
       this.showJoinInput = true;
     },

@@ -9,7 +9,24 @@ app.use(cors({
   origin: ['http://localhost:8080', 'http://10.252.114.134:8080']
 }));
 
+//express socket共同使用3000端口
 
+app.use(cors());
+app.use(express.json());
+
+const server = http.createServer(app); // ⬅️ 创建 http.Server
+const io = new Server(server, {
+  cors: {
+    origin: '*', // 或更精细的白名单配置
+    methods: ['GET', 'POST']
+  }
+});
+
+// ✅ 启动服务监听端口，使用同一个 server 实例
+const PORT = 3000;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`服务器运行在 http://localhost:${PORT}`);
+});
 
 // 获取本地IP地址
 app.all('/get-local-ip', (req, res) => {
@@ -29,9 +46,7 @@ app.all('/get-local-ip', (req, res) => {
   res.json({ ip: localIp });
 });
 
-app.listen(3000, () => {
-  console.log('客户端后端服务启动于 http://localhost:3000');
-});
+
 
 app.all('/send-udp-broadcast', (req, res) => {
   const client = dgram.createSocket('udp4');
@@ -50,13 +65,7 @@ app.all('/send-udp-broadcast', (req, res) => {
   });
 });
 
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
-});
+
 
 
 // 房间列表
