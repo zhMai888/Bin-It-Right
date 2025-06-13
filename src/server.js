@@ -4,6 +4,7 @@ const app = express();
 const http = require('http');
 const { Server } = require('socket.io');
 const os = require('os');
+const dgram = require('dgram');
 app.use(cors({
   origin: 'http://localhost:8080',
   methods: ['GET', 'POST'],
@@ -29,6 +30,19 @@ app.get('/get-local-ip', (req, res) => {
   res.json({ ip: localIp });
 });
 
+app.get('/send-udp-broadcast', (req, res) => {
+  const client = dgram.createSocket('udp4');
+  const message = Buffer.from('FIND_SERVER');
+  client.send(message, 0, message.length, 33333, '255.255.255.255', (err) => {
+    client.close();
+    if (err) {
+      console.error('发送UDP广播时出错:', err);
+      res.status(500).json({ success: false, message: '发送UDP广播失败' });
+    } else {
+      res.json({ success: true, message: 'UDP广播发送成功' });
+    }
+  });
+});
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -106,7 +120,42 @@ io.on('connection', (socket) => {
 });
 
 
-// 启动服务器并监听所有网卡
+// 创建UDP服务器
+const udpServer = dgram.createSocket('udp4');
+
+udpServer.on('message', (message, remote) => {
+  if (message.toString() === 'FIND_SERVER') {
+    const interfaces = os.networkInterfaces();
+    let localIp = '127.0.0.1';
+    
+    for (const interfaceName in interfaces) {
+      const iface = interfaces[interfaceName];
+      for (const alias of iface) {
+        if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) {
+          localIp = alias.address;
+          break;
+        }
+      }
+    }
+    
+    const response = Buffer.from(localIp);
+    udpServer.send(response, 0, response.length, remote.port, remote.address, (err) => {
+      if (err) {
+        console.error('发送UDP响应时出错:', err);
+      }
+    });
+  }
+});
+
+udpServer.on('listening', () => {
+  const address = udpServer.address();
+  console.log(`UDP服务器监听在 ${address.address}:${address.port}`);
+});
+
+// 启动UDP服务器
+udpServer.bind(33333);
+
+// 启动HTTP服务器并监听所有网卡
 server.listen(port, '0.0.0.0', () => {
   console.log(`服务器运行在 http://localhost:${port}`);
 });
