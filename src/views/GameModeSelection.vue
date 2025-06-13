@@ -86,6 +86,8 @@ export default {
         const ip = await getLocalNetworkIP();
         // 发送 UDP 广播
         const server_ip = await axios.get(`http://${ip}:3000/send-udp-broadcast`);
+        console.log(server_ip);
+        
         const response = await axios.get(`http://${server_ip}:3000/join-room`, {
           params: {
             roomId: this.joinRoomId

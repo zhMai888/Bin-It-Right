@@ -32,6 +32,9 @@ app.get('/get-local-ip', (req, res) => {
 
 app.get('/send-udp-broadcast', (req, res) => {
   const client = dgram.createSocket('udp4');
+  client.bind(() => {
+    client.setBroadcast(true);
+  });
   const message = Buffer.from('FIND_SERVER');
   client.send(message, 0, message.length, 33333, '255.255.255.255', (err) => {
     client.close();
