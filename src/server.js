@@ -9,6 +9,26 @@ app.use(cors({
   origin: ['http://localhost:8080', 'http://10.252.114.134:8080']
 }));
 
+function getLocalIP() {
+  const interfaces = os.networkInterfaces();
+  const ignoredInterfaces = ['vmware', 'virtualbox', 'loopback', 'veth', 'vethernet'];
+  for (const name in interfaces) {
+    
+    const nameLower = name.toLowerCase();
+    if (ignoredInterfaces.some(ign => nameLower.includes(ign))) {
+      continue; // 忽略虚拟网卡
+    }
+
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return '0.0.0.0';
+}
+
+
 //express socket共同使用3000端口
 
 app.use(cors());
@@ -30,52 +50,30 @@ server.listen(PORT, '0.0.0.0', () => {
 
 // 获取本地IP地址
 app.all('/get-local-ip', (req, res) => {
-  const interfaces = os.networkInterfaces();
-  const isVirtualInterface = (name) => {
-    const virtualKeywords = ['vmware', 'virtualbox', 'loopback', 'veth', 'vethernet', 'docker', 'wsl'];
-    const nameLower = name.toLowerCase();
-    return virtualKeywords.some(keyword => nameLower.includes(keyword));
-  };
-
-  let localIp = '127.0.0.1';
-  
-  for (const [name, ifaces] of Object.entries(interfaces)) {
-    if (isVirtualInterface(name)) continue;
-    
-    for (const iface of ifaces) {
-      if (iface.family === 'IPv4' && iface.address !== '127.0.0.1' && !iface.internal) {
-        localIp = iface.address;
-        break;
-      }
-    }
-    
-    if (localIp !== '127.0.0.1') break;
-  }
-  
+  let localIp = getLocalIP();
   res.json({ ip: localIp });
 });
 
-
-
 app.all('/send-udp-broadcast', (req, res) => {
   const client = dgram.createSocket('udp4');
-  client.bind(() => {
+  let localIp = getLocalIP();
+
+  client.bind({ address: localIp }, () => {
     client.setBroadcast(true);
-  });
-  const message = Buffer.from('FIND_SERVER');
-  client.send(message, 0, message.length, 33333, '255.255.255.255', (err) => {
-    client.close();
-    if (err) {
-      console.error('发送UDP广播时出错:', err);
-      res.status(500).json({ success: false, message: '发送UDP广播失败' });
-    } else {
-      res.json({ success: true, message: 'UDP广播发送成功' });
-    }
+    const message = Buffer.from('FIND_SERVER');
+
+    // 注意这里：明确指定广播目标和源地址
+    client.send(message, 0, message.length, 33333, '255.255.255.255', (err) => {
+      client.close();
+      if (err) {
+        console.error('发送UDP广播时出错:', err);
+        res.status(500).json({ success: false, message: '发送UDP广播失败' });
+      } else {
+        res.json({ success: true, message: `UDP广播从 ${localIp} 发送成功` });
+      }
+    });
   });
 });
-
-
-
 
 // 房间列表
 const createdRooms = [];
@@ -112,6 +110,7 @@ app.get('/join-room', (req, res) => {
   }
   return res.send({ success: false, message: `房间 ${roomId} 不存在` });
 });
+
 
 // Socket.IO
 io.on('connection', (socket) => {
