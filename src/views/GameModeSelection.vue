@@ -82,23 +82,25 @@ export default {
       this.showJoinInput = true;
     },
     async confirmJoinRoom() {
-  try {
-    const ip = await getLocalNetworkIP();
-    const response = await axios.get(`http://${ip}:3000/join-room`, {
-      params: {
-        roomId: this.joinRoomId
+      try {
+        const ip = await getLocalNetworkIP();
+        // 发送 UDP 广播
+        const server_ip = await axios.get(`http://${ip}:3000/send-udp-broadcast`);
+        const response = await axios.get(`http://${server_ip}:3000/join-room`, {
+          params: {
+            roomId: this.joinRoomId
+          }
+        });
+        if (response.data.success) {
+          socket.emit('join-room', this.joinRoomId);
+          // 加入房间成功后的逻辑
+        } else {
+          console.error('加入房间失败:', response.data.message);
+        }
+      } catch (error) {
+        console.error('加入房间时出错:', error);
       }
-    });
-    if (response.data.success) {
-      socket.emit('join_room', this.joinRoomId);
-      // 加入房间成功后的逻辑
-    } else {
-      console.error('加入房间失败:', response.data.message);
     }
-  } catch (error) {
-    console.error('加入房间时出错:', error);
-  }
-}
   }
 }
 </script>
