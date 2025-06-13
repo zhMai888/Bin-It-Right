@@ -31,23 +31,25 @@ server.listen(PORT, '0.0.0.0', () => {
 // 获取本地IP地址
 app.all('/get-local-ip', (req, res) => {
   const interfaces = os.networkInterfaces();
-  const ignoredInterfaces = ['vmware', 'virtualbox', 'loopback', 'veth', 'vethernet'];
+  const isVirtualInterface = (name) => {
+    const virtualKeywords = ['vmware', 'virtualbox', 'loopback', 'veth', 'vethernet', 'docker', 'wsl'];
+    const nameLower = name.toLowerCase();
+    return virtualKeywords.some(keyword => nameLower.includes(keyword));
+  };
 
   let localIp = '127.0.0.1';
   
-  for (const interfaceName in interfaces) {
-
-    const nameLower = interfaceName.toLowerCase();
-    if (ignoredInterfaces.some(ign => nameLower.includes(ign))) {
-      continue; // 忽略虚拟网卡
-    }
+  for (const [name, ifaces] of Object.entries(interfaces)) {
+    if (isVirtualInterface(name)) continue;
     
-    for (const iface of interfaces[interfaceName]) {
+    for (const iface of ifaces) {
       if (iface.family === 'IPv4' && iface.address !== '127.0.0.1' && !iface.internal) {
         localIp = iface.address;
         break;
       }
     }
+    
+    if (localIp !== '127.0.0.1') break;
   }
   
   res.json({ ip: localIp });
