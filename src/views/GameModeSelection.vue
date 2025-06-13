@@ -47,14 +47,14 @@ async function getLocalNetworkIP() {
     return '127.0.0.1';
   }
 }
-let socket;
+// let socket;
 
-async function initSocket() {
-  const ip = await getLocalNetworkIP();
-  socket = io(`http://${ip}:3000`);
-}
+// async function initSocket() {
+//   const ip = await getLocalNetworkIP();
+//   socket = io(`http://${ip}:3000`);
+// }
 
-initSocket();
+// initSocket();
 
 export default {
   data() {
