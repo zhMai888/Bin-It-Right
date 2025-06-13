@@ -14,10 +14,11 @@ function getLocalIP() {
 }
 
 const udpServer = dgram.createSocket('udp4');
-const PORT = 3000;
+const PORT = 33333;
 
 udpServer.on('listening', () => {
-  console.log(`UDP 服务端已启动，监听端口 ${PORT}`);
+    udpServer.setBroadcast(true);
+    console.log(`UDP 服务端已启动，监听端口 ${PORT}`);
 });
 
 udpServer.on('message', (msg, rinfo) => {
@@ -28,4 +29,4 @@ udpServer.on('message', (msg, rinfo) => {
   });
 });
 
-udpServer.bind(PORT);
+udpServer.bind(PORT,'0.0.0.0');
