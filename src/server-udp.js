@@ -3,7 +3,14 @@ const os = require('os');
 
 function getLocalIP() {
   const interfaces = os.networkInterfaces();
+  const ignoredInterfaces = ['vmware', 'virtualbox', 'loopback', 'veth', 'vethernet'];
   for (const name in interfaces) {
+    
+    const nameLower = name.toLowerCase();
+    if (ignoredInterfaces.some(ign => nameLower.includes(ign))) {
+      continue; // 忽略虚拟网卡
+    }
+
     for (const iface of interfaces[name]) {
       if (iface.family === 'IPv4' && !iface.internal) {
         return iface.address;
