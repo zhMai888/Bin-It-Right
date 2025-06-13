@@ -47,7 +47,12 @@
       <div class="leaderboard">
         <h2>排行榜</h2>
         <div class="leaderboard-list">
-          <div v-for="(user, index) in sortedLeaderboard" :key="user.id" class="leaderboard-item">
+          <div
+            v-for="(user, index) in sortedLeaderboard"
+            :key="user.id"
+            class="leaderboard-item"
+            :class="{ 'current-user': currentUser && user.username === currentUser.username }"
+          >
             <span class="rank">{{ index + 1 }}</span>
             <span class="username">{{ user.username }}</span>
             <span class="score">{{ user.score }} 分</span>
@@ -149,16 +154,34 @@ export default {
         { id: 5, username: '自然之子', score: 5430 },
         { id: 6, username: '新用户', score: 1230 }
       ],
-      registeredUsers: [] // 初始化为空，实际数据从本地文件加载
+      registeredUsers: []
     }
   },
   created() {
-    // 页面加载时尝试读取本地用户信息
-    this.loadUsers();
+    this.refreshLeaderboard();
+    // 恢复登录状态
+    const savedUser = localStorage.getItem('eco_current_user');
+    if (savedUser) {
+      this.currentUser = JSON.parse(savedUser);
+    }
+  },
+  activated() {
+    // keep-alive 返回页面时刷新排行榜
+    this.refreshLeaderboard();
   },
   computed: {
     sortedLeaderboard() {
-      return [...this.leaderboard].sort((a, b) => b.score - a.score)
+      // 只显示前五名和当前用户（如不在前五名）
+      let sorted = [...this.leaderboard].sort((a, b) => b.score - a.score);
+      let top5 = sorted.slice(0, 5);
+      if (
+        this.currentUser &&
+        !top5.some(u => u.username === this.currentUser.username)
+      ) {
+        const current = sorted.find(u => u.username === this.currentUser.username);
+        if (current) top5.push(current);
+      }
+      return top5;
     }
   },
   methods: {
@@ -216,8 +239,29 @@ export default {
       this.gameStarted = false;
       console.log('游戏退出');
     },
+    refreshLeaderboard() {
+      // 读取本地用户信息
+      this.loadUsers();
+      // 合并演示账号和注册用户
+      let users = [
+        { id: 1, username: '环保达人', score: 9850 },
+        { id: 2, username: '绿色先锋', score: 8720 },
+        { id: 3, username: '地球卫士', score: 7650 },
+        { id: 4, username: '生态守护者', score: 6540 },
+        { id: 5, username: '自然之子', score: 5430 },
+        { id: 6, username: '新用户', score: 1230 }
+      ];
+      // 加入注册用户
+      this.registeredUsers.forEach((u, idx) => {
+        users.push({
+          id: 100 + idx,
+          username: u.username,
+          score: typeof u.score === 'number' ? u.score : 0
+        });
+      });
+      this.leaderboard = users;
+    },
     handleLogin() {
-      // 登录时读取最新用户信息
       this.loadUsers();
       const user = this.registeredUsers.find(
         u => u.username === this.loginForm.username &&
@@ -228,15 +272,16 @@ export default {
           username: user.username,
           email: user.email
         };
+        localStorage.setItem('eco_current_user', JSON.stringify(this.currentUser));
         this.showLogin = false;
         this.loginForm = { username: '', password: '' };
         alert('登录成功！');
+        this.refreshLeaderboard();
       } else {
         alert('用户名或密码错误！');
       }
     },
     handleRegister() {
-      // 注册时读取最新用户信息
       this.loadUsers();
       const usernameExists = this.registeredUsers.some(
         u => u.username === this.registerForm.username
@@ -248,22 +293,21 @@ export default {
       this.registeredUsers.push({
         username: this.registerForm.username,
         password: this.registerForm.password,
-        email: this.registerForm.email
+        email: this.registerForm.email,
+        score: 0 // 新用户初始分数
       });
       this.saveUsers();
-      this.leaderboard.push({
-        id: this.leaderboard.length + 1,
-        username: this.registerForm.username,
-        score: 0
-      });
       this.showRegister = false;
       this.registerForm = { username: '', password: '', email: '' };
       alert('注册成功！请登录。');
       this.showLogin = true;
+      this.refreshLeaderboard();
     },
     logout() {
       this.currentUser = null;
       this.gameStarted = false;
+      localStorage.removeItem('eco_current_user');
+      this.refreshLeaderboard();
     }
   }
 }
@@ -287,10 +331,10 @@ export default {
   text-align: center;
   margin-bottom: 30px;
   padding: 32px 20px 24px 20px;
-  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
-  color: white;
+  /*background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);*/
+  color: rgb(0, 242, 255);
   border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(67, 233, 123, 0.15);
+  /* box-shadow: 0 4px 24px rgba(67, 233, 123, 0.15); */
   position: relative;
   overflow: hidden;
 }
@@ -301,15 +345,15 @@ export default {
   letter-spacing: 2px;
   font-weight: bold;
   text-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  color: #ffffffe5;
+  color: #40d96ae5;
 }
 
 .header p {
   margin: 16px 0 0;
   font-size: 1.3em;
   opacity: 0.95;
-  color: #ffffffe5;
-  text-shadow: 0 2px 8px rgba(44, 62, 80, 0.18);
+  color: #9d2b2b5a;
+  text-shadow: 0 2px 8px rgba(173 57 57 / 21%);
 }
 
 .user-status {
@@ -433,6 +477,13 @@ export default {
   font-size: 1.08em;
   position: relative;
   color: #234;
+}
+
+.leaderboard-item.current-user {
+  border: 2px solid #43e97b;
+  background: linear-gradient(90deg, #e0ffe7 60%, #b2f7ef 100%);
+  box-shadow: 0 0 8px #43e97b55;
+  font-weight: bold;
 }
 
 .leaderboard-item:nth-child(1) {
