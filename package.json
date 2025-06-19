@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "start node src/server-udp.js && start node src/server.js && vue-cli-service serve",
+    "serve": "start node src/server.js && vue-cli-service serve",
     "build": "vue-cli-service build"
   },
   "dependencies": {

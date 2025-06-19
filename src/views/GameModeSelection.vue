@@ -7,7 +7,7 @@
     <button class="game-btn" @click="joinRoom">加入房间</button>
     <div v-if="showJoinInput" class="join-room-input-group">
       <input v-model="joinRoomId" type="text" placeholder="请输入房间码">
-      <button class="game-btn" @click="confirmJoinRoom">确定</button>
+      <button class="game-btn" @click="confirmJoinRoom()">确定</button>
     </div>
   </div>
 </template>
@@ -15,6 +15,8 @@
 <script>
 import axios from 'axios';
 import io from 'socket.io-client';
+const ws = new WebSocket('ws://localhost:3030');
+
 
 
 // function getLocalIP() {
@@ -84,21 +86,36 @@ export default {
     async confirmJoinRoom() {
       try {
         const ip = await getLocalNetworkIP();
-        // 发送 UDP 广播
-        const server_ip = await axios.get(`http://${ip}:3000/send-udp-broadcast`);
-        console.log(server_ip);
-        
-        const response = await axios.get(`http://${server_ip}:3000/join-room`, {
+        // 发送 UDP 广播，并将输入值作为房间码传递
+        await axios.get(`http://${ip}:3000/send-udp-broadcast`, {
           params: {
             roomId: this.joinRoomId
           }
         });
-        if (response.data.success) {
-          socket.emit('join-room', this.joinRoomId);
-          // 加入房间成功后的逻辑
-        } else {
-          console.error('加入房间失败:', response.data.message);
-        }
+        ws.onmessage = async (event) => {
+          const data = JSON.parse(event.data);
+          if (data.type === 'udp_response') {
+            console.log('收到UDP回复:', data.data);
+            const server_ip = data.data;
+            try {
+              const response = await axios.get(`http://${server_ip}:3000/join-room`, {
+                params: {
+                  roomId: this.joinRoomId
+                }
+              });
+              if (response.data.success) {
+                socket.emit('join-room', this.joinRoomId);
+                // 加入房间成功后的逻辑
+                console.log("加入房间成功");//已经连接到另一台机器的后端
+                
+              } else {
+                console.error('加入房间失败:', response.data.message);
+              }
+            } catch (error) {
+              console.error('加入房间时出错:', error);
+            }
+          }
+        };
       } catch (error) {
         console.error('加入房间时出错:', error);
       }
