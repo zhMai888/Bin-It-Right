@@ -2,8 +2,8 @@
   <div class="eco-game-home">
     <!-- 背景和标题 -->
     <div class="header">
-      <h1>环保卫士</h1>
-      <p>保护地球，从游戏开始！</p>
+      <h1>Bin it Right！</h1>
+      <p>For A Better future</p>
     </div>
 
     <!-- 用户状态显示 -->
@@ -21,26 +21,16 @@
     <!-- 主功能区 -->
     <div class="main-area">
       <div class="game-controls">
-        <button 
-          class="start-btn" 
+        <div class="start-btn" 
           @click="goToGame"
-          :disabled="!currentUser"
-        >
-          开始游戏
-        </button>
-        <button 
-          class="pokedex-btn"
-          @click="goToPokedex"
-        >
-          图鉴
-        </button>
-        <button 
-          class="exit-btn" 
-          @click="exitGame"
-          :disabled="!gameStarted"
-        >
-          退出游戏
-        </button>
+          :disabled="!currentUser">
+          <div>Game Start</div>
+        </div>          
+        <div class="pokedex-btn"
+          @click="goToPokedex" >
+          <div>Archive</div>     
+        </div>
+        
       </div>
 
       <!-- 排行榜 -->
@@ -235,10 +225,7 @@ export default {
     goToPokedex() {
       this.$router.push({ name: 'Pokedex' });
     },
-    exitGame() {
-      this.gameStarted = false;
-      console.log('游戏退出');
-    },
+
     refreshLeaderboard() {
       // 读取本地用户信息
       this.loadUsers();
@@ -345,15 +332,15 @@ export default {
   letter-spacing: 2px;
   font-weight: bold;
   text-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  color: #40d96ae5;
+  color: #318d4ae5;
 }
 
 .header p {
   margin: 16px 0 0;
   font-size: 1.3em;
   opacity: 0.95;
-  color: #9d2b2b5a;
-  text-shadow: 0 2px 8px rgba(173 57 57 / 21%);
+  color: #d6ff008c;
+  text-shadow: 0 2px 8px rgb(143 29 29 / 92%);
 }
 
 .user-status {
@@ -391,57 +378,77 @@ export default {
   gap: 18px;
 }
 
-.game-controls button {
-  padding: 18px 0;
-  font-size: 1.25em;
+.game-controls div {
+  
+  font-size: 1.2em;
   border: none;
-  border-radius: 12px;
+  
   cursor: pointer;
   font-weight: bold;
-  box-shadow: 0 2px 12px rgba(67, 233, 123, 0.10);
+  
   transition: all 0.3s;
-  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
-  color: #ffffffe5;
+  /* background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%); */
+  color: #43e97b;
+  text-shadow: #2e8b57 0px 0px 8px;
+}
+.start-btn {
+  text-align: center;
+  
+  background-image: url('/src/assets/start/button1.png');
+  width: 150px;
+  height: 150px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+}
+.start-btn div{
+  transform: rotate(30deg);
 }
 
-.game-controls button:disabled {
-  background: #6b69699a;
+.game-control div disabled {
+  /* background: #6b69699a; */
   color: #ffffffe5;
   cursor: not-allowed;
   opacity: 0.7;
 }
 
-.start-btn:not(:disabled):hover,
-.exit-btn:not(:disabled):hover {
-  background: linear-gradient(90deg, #38f9d7 0%, #43e97b 100%);
+.start-btn:not(:disabled):hover {
   transform: scale(1.06);
 }
 
-.exit-btn {
-  background: linear-gradient(90deg, #ff5858 0%, #f09819 100%);
-}
-
-.exit-btn:not(:disabled):hover {
-  background: linear-gradient(90deg, #f09819 0%, #ff5858 100%);
-}
-
 .pokedex-btn {
-  padding: 18px 0;
+  width: 150px;
+  height: 150px;
+
   font-size: 1.25em;
+  background-image: url('/src/assets/start/button2.png');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
-  border-radius: 12px;
+
   cursor: pointer;
   font-weight: bold;
-  box-shadow: 0 2px 12px rgba(67, 233, 123, 0.10);
+
   transition: all 0.3s;
-  background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+
   color: #ffffffe5;
   margin-bottom: 10px;
 }
 
 .pokedex-btn:hover {
-  background: linear-gradient(90deg, #00f2fe 0%, #4facfe 100%);
+  
   transform: scale(1.06);
+}
+.pokedex-btn div {
+  transform: rotate(50deg);
+  color: #43e97b;
+  text-shadow: #2e8b57 0px 0px 8px;
 }
 
 .leaderboard {
@@ -639,9 +646,9 @@ body, html, #app {
   height: 100vh;
   margin: 0;
   padding: 0;
-  /* 背景图全屏显示且固定 */
-  background: url('/src/assets/background/1000.jpg') no-repeat center center fixed;
-  background-size: cover;
+  /* 背景图全屏显示且固定，宽度拉伸，高度适应 */
+  background: url('/src/assets/background/main_background.png') no-repeat center center fixed;
+  background-size: 100vw 100vh;
   overflow: hidden;
 }
 </style>
