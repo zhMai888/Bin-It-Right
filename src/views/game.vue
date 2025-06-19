@@ -84,10 +84,14 @@
             v-for="bin in bins"
             :key="bin.id"
             class="bin"
-            :class="{ 'has-emotion': bin.emotion }"
+            :class="[{ 'has-emotion': bin.emotion }, bin.id === 1 ? 'first-bin' : '']"
             @click="throwGarbage(bin.type)"
           >
-            <img :src="bin.img" :alt="bin.label" draggable="false" style="width: 200px; height: 250px;">
+            <img :src="bin.img" 
+              :alt="bin.label"
+              draggable="false" 
+              :style="bin.id === 1 ? 'width: 350px; height: 250px;' : 'width: 200px; height: 250px;'"
+            >
             <div class="bin-emotion" v-if="bin.emotion" :style="{ color: bin.correct ? 'green' : 'red' }">
               {{ bin.emotion }}
             </div>
@@ -148,7 +152,7 @@
                         <div class="col image"><img :src="item.img" alt="mistake trash" /></div>
                         <div class="col name">{{ item.name }}</div>
                         <div class="col type">
-                          {{ item.typeid === 1 ? 'shop' : item.typeid === 2 ? 'recyclable waste' : item.typeid === 3 ? 'unrecyclable waste' : item.typeid === 4 ? 'hazardous waste' : 'kichen waste' }}
+                          {{ item.typeid === 1 ? 'food' : item.typeid === 2 ? 'recyclable waste' : item.typeid === 3 ? 'unrecyclable waste' : item.typeid === 4 ? 'hazardous waste' : 'kichen waste' }}
                         </div>
                         <div class="col desc">{{ item.description }}</div>
                       </li>
@@ -198,7 +202,7 @@ export default {
       gameIntro: false,
       gameStarted: false,
       bins: [
-        { id: 1, type: 'shop', label: '商店' , img: "", emotion: null},
+        { id: 1, type: 'food', label: '猫' , img: require('../assets/bin/cat.png'), emotion: null},
         { id: 2, type: 'recycle', label: '可回收' , img: require('../assets/bin/recyclable.png'), emotion: null},
         { id: 3, type: 'nonerecyle', label: '不可回收' , img: require("../assets/bin/non-recyclable.png"), emotion: null},
         { id: 4, type: 'hazardous', label: '有害' , img: require("../assets/bin/hazardous_waste.png"), emotion: null},
@@ -229,7 +233,7 @@ export default {
       garbageList: [],
       garbageMap: new Map(), 
       selectedGarbage: null,
-      garbageTypes: ['shop', 'recycle', 'nonerecyle', 'hazardous', 'kichen'],
+      garbageTypes: ['food', 'recycle', 'nonerecyle', 'hazardous', 'kichen'],
       idCounter: 1,
       animationFrameId: null,
       change_speed: 0.1,
@@ -681,6 +685,9 @@ export default {
   user-select: none;
   transition: background 0.3s;
   position: relative;
+}
+.first-bin {
+  margin-right: 200px;
 }
 .bin:hover {
   filter: brightness(120%);
