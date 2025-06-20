@@ -66,7 +66,6 @@ udpServer.on('listening', () => {
 udpServer.on('message', (msg, rinfo) => {
   if (rinfo.port == 33333) {
     console.log(`接收到广播消息来自 ${rinfo.address}:${rinfo.port} 内容: ${msg.toString()}`);
-    remoteIp = rinfo.address;
     wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({
@@ -77,6 +76,7 @@ udpServer.on('message', (msg, rinfo) => {
     });
   }
   if (msg.toString() === currentRoomId) {
+    remoteIp = rinfo.address;
     const response = getLocalIP();
     udpServer.send(response, UDP_PORT, rinfo.address, () => {
       console.log(`回复服务端 IP: ${response}`);
