@@ -49,7 +49,7 @@
             <div @click="showRegister = true" class="signUp">Sign Up</div>
           </div>
           <div v-else>
-            <div class="loginB">Welcome! {{ currentUser.username }} </div>
+            <div class="loginB">Welcome <br>{{ currentUser.username }} </div>
             <div @click="logout" class="signUp">Log Out</div>
           </div>
         </div>
