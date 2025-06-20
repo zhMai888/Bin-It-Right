@@ -163,7 +163,7 @@
                   <button @click="BackHomeClick" class="backhomeButton">
                     <img src="../assets/backhome.png" alt="" style="width: 30px !important; height: 30px !important;">
                   </button>
-                  <button @click="againClick" class="againButton">
+                  <button @click="againClick" class="againButton" v-if="this.gamemodel == 'local'">
                     <img src="../assets/again.png" alt="" style="width: 30px !important; height: 30px !important;">
                   </button>
                 </div>
@@ -174,7 +174,7 @@
             <button @click="BackHomeClick" class="backhomeButton2">
               <img src="../assets/backhome.png" alt="" style="width: 40px !important; height: 40px !important;">
             </button>
-            <button @click="againClick" class="againButton2">
+            <button @click="againClick" class="againButton2" v-if="this.gamemodel == 'local'">
               <img src="../assets/again.png" alt="" style="width: 40px !important; height: 40px !important;">
             </button>
           </div>

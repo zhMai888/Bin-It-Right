@@ -79,7 +79,18 @@ udpServer.on('message', (msg, rinfo) => {
     remoteIp = rinfo.address;
     const response = getLocalIP();
     udpServer.send(response, UDP_PORT, rinfo.address, () => {
+      //websocket让前端跳转
+      wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({
+            type: 'udp_response',
+            data: 'startOnlineGame'
+          }));
+        }
+      });
       console.log(`回复服务端 IP: ${response}`);
+      console.log("开始游戏");
+      
     });
   }
 });
@@ -146,6 +157,31 @@ app.all('/send-score', (req, res) => {
     });
   });
 });
+
+
+app.all('/send-ready', (req, res) => {
+  const targetIp = remoteIp;    // 获取目标IP
+
+  const client = dgram.createSocket('udp4');
+  const port = 33333;
+  const message = 'ready'; 
+
+  client.send(message, port, targetIp, (err) => {
+    client.close(); // 发送后关闭socket
+    if (err) {
+      return res.status(500).json({ 
+        success: false, 
+        message: `发送ready失败`,
+        error: err.message 
+      });
+    }
+    res.json({ 
+      success: true, 
+      message: `已发送ready到 ${targetIp}:${port}` 
+    });
+  });
+});
+
 
 app.get('/create-room', (req, res) => {
   currentRoomId = generateRoomId();

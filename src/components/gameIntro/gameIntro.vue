@@ -18,10 +18,13 @@
         </div>
       </div>
     </transition>
+    <p class="online_text" v-if="this.gamemodel=='online'&& this.is_ready">Wait for another Player!!!</p>
   </div>
 </template>
 
 <script>
+import {axios} from 'axios';
+const ws = new WebSocket('ws://localhost:3030');
 export default {
   name: 'GameIntro',
   props: {
@@ -35,8 +38,14 @@ export default {
       visible: true,
       showBalloon: false,
       is_raise: false,
-      imageLoaded: false
+      imageLoaded: false,
+      gamemodel: null,
+      is_ready: false,
+      remote_ready: false
     };
+  },
+  created() {
+    this.getmodel();
   },
   methods: {
     onImageLoaded() {
@@ -46,11 +55,31 @@ export default {
         this.showBalloon = true;
       });
     },
-    startGame() {
-      this.is_raise = false;
-      setTimeout(() => {
-        this.showBalloon = false;
-      }, 800);
+    async startGame() {
+      if(this.gamemodel === 'local') {
+        this.is_raise = false;
+        setTimeout(() => {
+          this.showBalloon = false;
+        }, 800);
+      }else{
+        this.is_ready = true;
+        await axios.get('http://localhost:3000/send-ready');
+        // 监听远程玩家的准备状态
+        ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          console.log('收到UDP消息:', data);
+          if (data.type === 'udp_response' && data.data === 'remote_ready') {
+            this.remote_ready = true;
+          }
+        };
+        if(this.remote_ready){
+          this.is_ready = false;
+          this.is_raise = false;
+          setTimeout(() => {
+            this.showBalloon = false;
+          }, 800);
+        }
+      }
     },
     onEnterEnd() {
       // 出现按钮
@@ -61,6 +90,13 @@ export default {
     onLeaveEnd() {
       this.visible = false;
       this.onConfirmed();
+    },
+    getmodel(){
+      if (!this.$route.params.value || (this.$route.params.value !== 'local' && this.$route.params.value !== 'online')) {
+        this.$router.push({ name: 'login' });
+        return;
+      }
+      this.gamemodel = this.$route.params.value;
     }
   }
 };
@@ -172,6 +208,15 @@ export default {
 
 .balloon-rise-leave-active {
   animation: fly-away 0.8s ease-in forwards;
+}
+
+.online_text{
+  font-size: 40px;
+  color: #ff6348;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 30px;
 }
 
 @keyframes rise-up {
