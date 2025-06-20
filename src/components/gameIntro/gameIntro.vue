@@ -18,13 +18,14 @@
         </div>
       </div>
     </transition>
-    <p class="online_text" v-if="this.gamemodel=='online'&& this.is_ready">Wait for another Player!!!</p>
+    <p class="online_text" v-if="gamemodel === 'online' && is_ready">Wait for another Player!!!</p>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
 const ws = new WebSocket('ws://localhost:3031');
+
 export default {
   name: 'GameIntro',
   props: {
@@ -46,43 +47,58 @@ export default {
   },
   created() {
     this.getmodel();
+
+    // 设置 WebSocket 消息监听
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('收到UDP消息:', data);
+      if (data.type === 'udp_responseReady') {
+        this.remote_ready = true;
+      }
+    };
+  },
+  watch: {
+    remote_ready() {
+      this.checkBothReady();
+    },
+    is_ready() {
+      this.checkBothReady();
+    }
   },
   methods: {
     onImageLoaded() {
-      // 图片加载完成后触发动画
       this.imageLoaded = true;
       this.$nextTick(() => {
         this.showBalloon = true;
       });
     },
     async startGame() {
-      if(this.gamemodel === 'local') {
+      if (this.gamemodel === 'local') {
         this.is_raise = false;
         setTimeout(() => {
           this.showBalloon = false;
         }, 800);
-      }else{
+      } else {
         this.is_ready = true;
-        await axios.get('http://localhost:3000/send-ready');
-        // 监听远程玩家的准备状态
-        ws.onmessage = (event) => {
-          console.log(event);
-          
-          const data = JSON.parse(event.data);
-          console.log('收到UDP消息:', data);
-          if (data.type === 'udp_response' && data.data === 'remoteReady') {
-            this.remote_ready = true;
-            this.is_ready = false;
-            this.is_raise = false;
-            setTimeout(() => {
-              this.showBalloon = false;
-            }, 800);
-          }
-        };
+        
+        try {
+          await axios.get('http://localhost:3000/send-ready');
+        } catch (e) {
+          console.error('发送准备状态失败:', e);
+        }
+        // 提示对方等待（气泡已出现）
+        // remote_ready 的监听在 watch 中处理
+      }
+    },
+    checkBothReady() {
+      if (this.is_ready && this.remote_ready) {
+        this.is_raise = false;
+        setTimeout(() => {
+          this.showBalloon = false;
+        }, 800);
       }
     },
     onEnterEnd() {
-      // 出现按钮
       setTimeout(() => {
         this.is_raise = true;
       }, 3000);
@@ -91,12 +107,13 @@ export default {
       this.visible = false;
       this.onConfirmed();
     },
-    getmodel(){
-      if (!this.$route.params.value || (this.$route.params.value !== 'local' && this.$route.params.value !== 'online')) {
+    getmodel() {
+      const mode = this.$route.params.value;
+      if (!mode || (mode !== 'local' && mode !== 'online')) {
         this.$router.push({ name: 'login' });
         return;
       }
-      this.gamemodel = this.$route.params.value;
+      this.gamemodel = mode;
     }
   }
 };
