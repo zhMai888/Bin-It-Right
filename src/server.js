@@ -7,6 +7,7 @@ const os = require('os');
 const dgram = require('dgram');
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 3030 });
+const wss2 = new WebSocket.Server({ port: 3031 });
 
 // 配置中间件
 app.use(cors());
@@ -92,21 +93,20 @@ udpServer.on('message', (msg, rinfo) => {
       console.log("开始游戏");
     });
   }else if(msg.toString() === 'ready') {
-    remoteIp = rinfo.address;
-    const response = getLocalIP();
-    udpServer.send(response, UDP_PORT, rinfo.address, () => {
+    // remoteIp = rinfo.address;
+    const response = '';
+    
       //websocket让前端跳转
-      wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify({
-            type: 'udp_response',
-            data: 'remoteReady'
-          }));
-        }
-      });
-      console.log(`回复服务端 IP: ${response}`);
-      console.log("准备就绪");
+    wss2.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({
+          type: 'udp_response',
+          data: 'remoteReady'
+        }));
+      }
     });
+    
+    
   }
 });
 
