@@ -23,8 +23,8 @@
 </template>
 
 <script>
-import {axios} from 'axios';
-const ws = new WebSocket('ws://localhost:3030');
+import axios from 'axios';
+const ws = new WebSocket('ws://localhost:3031');
 export default {
   name: 'GameIntro',
   props: {
@@ -66,19 +66,19 @@ export default {
         await axios.get('http://localhost:3000/send-ready');
         // 监听远程玩家的准备状态
         ws.onmessage = (event) => {
+          console.log(event);
+          
           const data = JSON.parse(event.data);
           console.log('收到UDP消息:', data);
-          if (data.type === 'udp_response' && data.data === 'remote_ready') {
+          if (data.type === 'udp_response' && data.data === 'remoteReady') {
             this.remote_ready = true;
+            this.is_ready = false;
+            this.is_raise = false;
+            setTimeout(() => {
+              this.showBalloon = false;
+            }, 800);
           }
         };
-        if(this.remote_ready){
-          this.is_ready = false;
-          this.is_raise = false;
-          setTimeout(() => {
-            this.showBalloon = false;
-          }, 800);
-        }
       }
     },
     onEnterEnd() {

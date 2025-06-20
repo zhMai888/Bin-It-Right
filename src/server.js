@@ -7,6 +7,8 @@ const os = require('os');
 const dgram = require('dgram');
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 3030 });
+const wss2 = new WebSocket.Server({ port: 3031 });
+
 
 // 配置中间件
 app.use(cors());
@@ -96,7 +98,7 @@ udpServer.on('message', (msg, rinfo) => {
     const response = getLocalIP();
     udpServer.send(response, UDP_PORT, rinfo.address, () => {
       //websocket让前端跳转
-      wss.clients.forEach(client => {
+      wss2.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({
             type: 'udp_response',
