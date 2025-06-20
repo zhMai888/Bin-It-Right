@@ -68,7 +68,8 @@ export default {
   },
   methods: {
     goToSinglePlayer() {
-      // 实现单人游戏逻辑
+      // 跳转到单人游戏页面
+      this.$router.push( '/game/local');
     },
     async createRoom() {
       try {

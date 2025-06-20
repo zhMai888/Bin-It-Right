@@ -6,46 +6,51 @@
       <p>For A Better future</p>
     </div>
 
-    <!-- 用户状态显示 -->
-    <div class="user-status">
-      <div v-if="!currentUser">
-        <button @click="showLogin = true">登录</button>
-        <button @click="showRegister = true">注册</button>
-      </div>
-      <div v-else>
-        欢迎, {{ currentUser.username }}! 
-        <button @click="logout">退出登录</button>
-      </div>
-    </div>
-
-    <!-- 主功能区 -->
     <div class="main-area">
-      <div class="game-controls">
-        <div class="start-btn" 
-          @click="goToGame"
-          :disabled="!currentUser">
-          <div>Game Start</div>
-        </div>          
-        <div class="pokedex-btn"
-          @click="goToPokedex" >
-          <div>Archive</div>     
+      <!-- 左侧：游戏按钮 -->
+      <div class="left-panel">
+        <div class="game-controls">
+          <div class="start-btn" 
+            @click="goToGame"
+            :disabled="!currentUser">
+            <div>Game Start</div>
+          </div>          
+          <div class="pokedex-btn"
+            @click="goToPokedex" >
+            <div>Archive</div>     
+          </div>
         </div>
-        
       </div>
 
-      <!-- 排行榜 -->
-      <div class="leaderboard">
-        <h2>排行榜</h2>
-        <div class="leaderboard-list">
-          <div
-            v-for="(user, index) in sortedLeaderboard"
-            :key="user.id"
-            class="leaderboard-item"
-            :class="{ 'current-user': currentUser && user.username === currentUser.username }"
-          >
-            <span class="rank">{{ index + 1 }}</span>
-            <span class="username">{{ user.username }}</span>
-            <span class="score">{{ user.score }} 分</span>
+      <!-- 中间：排行榜 -->
+      <div class="center-panel">
+        <div class="leaderboard">
+          <h2>Ranking List</h2>
+          <div class="leaderboard-list">
+            <div
+              v-for="(user, index) in sortedLeaderboard"
+              :key="user.id"
+              class="leaderboard-item"
+              :class="{ 'current-user': currentUser && user.username === currentUser.username }"
+            >
+              <span class="rank">{{ index + 1 }}</span>
+              <span class="username">{{ user.username }}</span>
+              <span class="score">{{ user.score }} 分</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：登录注册 -->
+      <div class="right-panel">
+        <div class="user-status">
+          <div v-if="!currentUser">
+            <div @click="showLogin = true" class="loginB">Login In</div>
+            <div @click="showRegister = true" class="signUp">Sign Up</div>
+          </div>
+          <div v-else>
+            <div class="loginB">Welcome <br>{{ currentUser.username }} </div>
+            <div @click="logout" class="signUp">Log Out</div>
           </div>
         </div>
       </div>
@@ -55,10 +60,10 @@
     <div v-if="showLogin" class="modal">
       <div class="modal-content">
         <span class="close" @click="showLogin = false">&times;</span>
-        <h2>登录</h2>
+        <h2>Log In</h2>
         <form @submit.prevent="handleLogin">
           <div class="form-group">
-            <label for="login-username">用户名:</label>
+            <label for="login-username">Username:</label>
             <input 
               id="login-username" 
               v-model="loginForm.username" 
@@ -66,7 +71,7 @@
             />
           </div>
           <div class="form-group">
-            <label for="login-password">密码:</label>
+            <label for="login-password">Password:</label>
             <input 
               id="login-password" 
               type="password" 
@@ -74,7 +79,7 @@
               required
             />
           </div>
-          <button type="submit">登录</button>
+          <button type="submit">Log in</button>
         </form>
       </div>
     </div>
@@ -83,10 +88,10 @@
     <div v-if="showRegister" class="modal">
       <div class="modal-content">
         <span class="close" @click="showRegister = false">&times;</span>
-        <h2>注册</h2>
+        <h2>Sign up</h2>
         <form @submit.prevent="handleRegister">
           <div class="form-group">
-            <label for="register-username">用户名:</label>
+            <label for="register-username">Username:</label>
             <input 
               id="register-username" 
               v-model="registerForm.username" 
@@ -94,7 +99,7 @@
             />
           </div>
           <div class="form-group">
-            <label for="register-password">密码:</label>
+            <label for="register-password">Password:</label>
             <input 
               id="register-password" 
               type="password" 
@@ -103,7 +108,7 @@
             />
           </div>
           <div class="form-group">
-            <label for="register-email">邮箱:</label>
+            <label for="register-email">Email:</label>
             <input 
               id="register-email" 
               type="email" 
@@ -111,7 +116,7 @@
               required
             />
           </div>
-          <button type="submit">注册</button>
+          <button type="submit">Sign Up</button>
         </form>
       </div>
     </div>
@@ -137,12 +142,12 @@ export default {
         email: ''
       },
       leaderboard: [
-        { id: 1, username: '环保达人', score: 9850 },
-        { id: 2, username: '绿色先锋', score: 8720 },
-        { id: 3, username: '地球卫士', score: 7650 },
-        { id: 4, username: '生态守护者', score: 6540 },
-        { id: 5, username: '自然之子', score: 5430 },
-        { id: 6, username: '新用户', score: 1230 }
+        { id: 1, username: 'Eco Master', score: 9850 },
+        { id: 2, username: 'Green Pioneer', score: 8720 },
+        { id: 3, username: 'Globe Defender', score: 7650 },
+        { id: 4, username: 'Eco Protecter', score: 6540 },
+        { id: 5, username: 'Son of Nature', score: 5430 },
+        
       ],
       registeredUsers: []
     }
@@ -215,7 +220,7 @@ export default {
     },
     goToGame() {
       if (!this.currentUser) {
-        alert('请先登录再开始游戏');
+        alert('Please log in or register first!');
         this.showLogin = true;
         return;
       }
@@ -231,12 +236,11 @@ export default {
       this.loadUsers();
       // 合并演示账号和注册用户
       let users = [
-        { id: 1, username: '环保达人', score: 9850 },
-        { id: 2, username: '绿色先锋', score: 8720 },
-        { id: 3, username: '地球卫士', score: 7650 },
-        { id: 4, username: '生态守护者', score: 6540 },
-        { id: 5, username: '自然之子', score: 5430 },
-        { id: 6, username: '新用户', score: 1230 }
+         { id: 1, username: 'Eco Master', score: 9850 },
+        { id: 2, username: 'Green Pioneer', score: 8720 },
+        { id: 3, username: 'Globe Defender', score: 7650 },
+        { id: 4, username: 'Eco Protecter', score: 6540 },
+        { id: 5, username: 'Son of Nature', score: 5430 },
       ];
       // 加入注册用户
       this.registeredUsers.forEach((u, idx) => {
@@ -262,10 +266,10 @@ export default {
         localStorage.setItem('eco_current_user', JSON.stringify(this.currentUser));
         this.showLogin = false;
         this.loginForm = { username: '', password: '' };
-        alert('登录成功！');
+        alert('Success！');
         this.refreshLeaderboard();
       } else {
-        alert('用户名或密码错误！');
+        alert('Wrong username or password!');
       }
     },
     handleRegister() {
@@ -274,7 +278,7 @@ export default {
         u => u.username === this.registerForm.username
       );
       if (usernameExists) {
-        alert('用户名已存在！');
+        alert('Username already exists!');
         return;
       }
       this.registeredUsers.push({
@@ -286,7 +290,7 @@ export default {
       this.saveUsers();
       this.showRegister = false;
       this.registerForm = { username: '', password: '', email: '' };
-      alert('注册成功！请登录。');
+      alert('Registration successful!');
       this.showLogin = true;
       this.refreshLeaderboard();
     },
@@ -344,38 +348,91 @@ export default {
 }
 
 .user-status {
-  text-align: right;
-  margin-bottom: 20px;
+  text-align: center;
+  margin-bottom: 0;
+  margin-top: 30px;
 }
 
-.user-status button {
-  margin-left: 10px;
+.user-status div {
+  
   padding: 7px 18px;
-  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
-  color: #ffffffe5;
+  
+  color: #43e97b;
   border: none;
-  border-radius: 20px;
+  font-size: 1.2em;
   cursor: pointer;
   font-weight: 600;
   box-shadow: 0 2px 8px rgba(67, 233, 123, 0.12);
   transition: background 0.3s, transform 0.2s;
 }
+.loginB{
+  background-image: url('/src/assets/start/sign_in.png');
+  height: 150px;
+  width: 200px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 80px;
+}
+.signUp {
+  background-image: url('/src/assets/start/sign_up.png');
+  height: 150px;
+  width: 200px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-.user-status button:hover {
-  background: linear-gradient(90deg, #38f9d7 0%, #43e97b 100%);
+.user-status div div:hover {
+  
   transform: translateY(-2px) scale(1.04);
 }
 
 .main-area {
   display: flex;
-  gap: 30px;
+  flex-direction: row;
+  gap: 250px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.left-panel, .center-panel, .right-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.left-panel {
+  flex: 1;
+  min-width: 180px;
+  
+}
+
+.center-panel {
+  flex: 2;
+  min-width: 350px;
+  max-width: 500px;
+  align-items: stretch;
+  /* margin-left: 200px;
+  margin-right: 200px; */
+}
+
+.right-panel {
+  flex: 1;
+  min-width: 180px;
+  max-width: 220px;
 }
 
 .game-controls {
-  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 18px;
+  justify-content: flex-end;
 }
 
 .game-controls div {
@@ -389,7 +446,7 @@ export default {
   transition: all 0.3s;
   /* background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%); */
   color: #43e97b;
-  text-shadow: #2e8b57 0px 0px 8px;
+  text-shadow: #f54747 0px 0px 8px;
 }
 .start-btn {
   text-align: center;
@@ -422,6 +479,7 @@ export default {
 .pokedex-btn {
   width: 150px;
   height: 150px;
+  margin-left: 80px; /* 向右偏移，可根据需要调整 */
 
   font-size: 1.25em;
   background-image: url('/src/assets/start/button2.png');
@@ -448,7 +506,7 @@ export default {
 .pokedex-btn div {
   transform: rotate(50deg);
   color: #43e97b;
-  text-shadow: #2e8b57 0px 0px 8px;
+  text-shadow: #f54747 0px 0px 8px;
 }
 
 .leaderboard {
