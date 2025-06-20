@@ -66,6 +66,8 @@ export default {
         await axios.get('http://localhost:3000/send-ready');
         // 监听远程玩家的准备状态
         ws.onmessage = (event) => {
+          console.log(event);
+          
           const data = JSON.parse(event.data);
           console.log('收到UDP消息:', data);
           if (data.type === 'udp_response' && data.data === 'remoteReady') {
