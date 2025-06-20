@@ -17,29 +17,6 @@ import axios from 'axios';
 import io from 'socket.io-client';
 const ws = new WebSocket('ws://localhost:3030');
 
-
-
-// function getLocalIP() {
-//   return new Promise((resolve) => {
-//     const RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
-//     if (!RTCPeerConnection) {
-//       resolve('localhost');
-//       return;
-//     }
-//     const pc = new RTCPeerConnection({ iceServers: [] });
-//     pc.createDataChannel('');
-//     pc.createOffer().then((offer) => pc.setLocalDescription(offer));
-//     pc.onicecandidate = (event) => {
-//       if (!event.candidate) return;
-//       const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/;
-//       const match = event.candidate.candidate.match(ipRegex);
-//       if (match) {
-//         resolve(match[1]);
-//         pc.close();
-//       }
-//     };
-//   });
-// }
 async function getLocalNetworkIP() {
   try {
     const response = await axios.get('http://localhost:3000/get-local-ip');
@@ -78,7 +55,14 @@ export default {
         this.roomId = response.data.roomId;
         socket.emit('join_room', this.roomId);
         console.log(`local join to ${this.roomId} through socket`);
-        
+        //如果ws传来udp_response并且data是'startOnlineGame'，跳转到在线游戏页面
+        ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          console.log('收到UDP消息:', data);
+          if (data.type === 'udp_response' && data.data === 'startOnlineGame') {
+            this.$router.push('/game/online');
+          }
+        };
       } catch (error) {
         console.error('创建房间失败:', error);
       }
@@ -110,6 +94,7 @@ export default {
                 socket.emit('join-room', this.joinRoomId);
                 // 加入房间成功后的逻辑
                 console.log("加入房间成功");//已经连接到另一台机器的后端
+                this.$router.push('/game/online');
                 
               } else {
                 console.error('加入房间失败:', response.data.message);
