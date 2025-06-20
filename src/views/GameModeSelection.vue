@@ -76,6 +76,8 @@ export default {
         const response = await axios.get(`http://${ip}:3000/create-room`);
         this.roomId = response.data.roomId;
         socket.emit('join_room', this.roomId);
+        console.log(`local join to ${this.roomId} through socket`);
+        
       } catch (error) {
         console.error('创建房间失败:', error);
       }

@@ -12,6 +12,10 @@ const wss = new WebSocket.Server({ port: 3030 });
 app.use(cors());
 app.use(express.json());
 
+var remoteIp = null;
+// 房间管理
+let currentRoomId = null;
+
 // 创建HTTP服务器和Socket.IO
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -39,8 +43,7 @@ function getLocalIP() {
   return '0.0.0.0';
 }
 
-// 房间管理
-let currentRoomId = null;
+
 
 function generateRoomId() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -63,6 +66,7 @@ udpServer.on('listening', () => {
 udpServer.on('message', (msg, rinfo) => {
   if (rinfo.port == 33333) {
     console.log(`接收到广播消息来自 ${rinfo.address}:${rinfo.port} 内容: ${msg.toString()}`);
+    remoteIp = rinfo.address;
     wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({
@@ -108,6 +112,37 @@ app.all('/send-udp-broadcast', (req, res) => {
       } else {
         res.json({ success: true, message: `UDP广播从 ${localIp} 发送成功` });
       }
+    });
+  });
+});
+
+app.all('/send-score', (req, res) => {
+  const score = req.query.score || req.body.score; // 获取分数
+  const targetIp = remoteIp;    // 获取目标IP
+
+  if (!targetIp || !score) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'IP和Score不能为空' 
+    });
+  }
+
+  const client = dgram.createSocket('udp4');
+  const port = 33333;
+  const message = score.toString(); // 直接发送分数（字符串格式）
+
+  client.send(message, port, targetIp, (err) => {
+    client.close(); // 发送后关闭socket
+    if (err) {
+      return res.status(500).json({ 
+        success: false, 
+        message: `发送分数到 ${targetIp}:${port} 失败`,
+        error: err.message 
+      });
+    }
+    res.json({ 
+      success: true, 
+      message: `已发送分数 ${score} 到 ${targetIp}:${port}` 
     });
   });
 });
