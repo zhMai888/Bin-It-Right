@@ -90,7 +90,22 @@ udpServer.on('message', (msg, rinfo) => {
       });
       console.log(`回复服务端 IP: ${response}`);
       console.log("开始游戏");
-      
+    });
+  }else if(msg.toString() === 'ready') {
+    remoteIp = rinfo.address;
+    const response = getLocalIP();
+    udpServer.send(response, UDP_PORT, rinfo.address, () => {
+      //websocket让前端跳转
+      wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({
+            type: 'udp_response',
+            data: 'remoteReady'
+          }));
+        }
+      });
+      console.log(`回复服务端 IP: ${response}`);
+      console.log("准备就绪");
     });
   }
 });
