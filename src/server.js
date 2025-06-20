@@ -95,14 +95,14 @@ udpServer.on('message', (msg, rinfo) => {
     });
   }else if(msg.toString() === 'ready') {
     // remoteIp = rinfo.address;
-    const response = '';
+    // const response = '';
     
       //websocket让前端跳转
     wss2.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({
           type: 'udp_response',
-          data: 'remoteReady'
+          data: `remoteReady from ${getLocalIP()}`
         }));
       }
     });
