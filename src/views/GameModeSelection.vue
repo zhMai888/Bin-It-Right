@@ -16,6 +16,8 @@
 import axios from 'axios';
 import io from 'socket.io-client';
 const ws = new WebSocket('ws://localhost:3030');
+console.log('GameModeSelection ws启动于3030');
+
 
 async function getLocalNetworkIP() {
   try {
@@ -43,6 +45,12 @@ export default {
       joinRoomId: ''
     }
   },
+  // beforeDestroy(){
+  //   if (ws) {
+  //     console.log('关闭前端ws on 3030');
+  //     ws.close();
+  //   }
+  // },
   methods: {
     goToSinglePlayer() {
       // 跳转到单人游戏页面
@@ -61,6 +69,8 @@ export default {
           console.log('收到UDP消息:', data);
           if (data.type === 'udp_response' && data.data === 'startOnlineGame') {
             this.$router.push('/game/online');
+            ws.close();
+            console.log('关闭前端ws on 3030');
           }
         };
       } catch (error) {

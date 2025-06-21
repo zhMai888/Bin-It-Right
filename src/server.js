@@ -7,7 +7,7 @@ const os = require('os');
 const dgram = require('dgram');
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 3030 });
-const wss2 = new WebSocket.Server({ port: 3031 });
+// const wss2 = new WebSocket.Server({ port: 3031 });
 
 
 // 配置中间件
@@ -17,6 +17,9 @@ app.use(express.json());
 var remoteIp = null;
 // 房间管理
 let currentRoomId = null;
+
+// var remoteReady=false;
+// var selfReady = false;
 
 // 创建HTTP服务器和Socket.IO
 const server = http.createServer(app);
@@ -68,14 +71,22 @@ udpServer.on('listening', () => {
 udpServer.on('message', (msg, rinfo) => {
   if (rinfo.port == 33333) {
     console.log(`接收到广播消息来自 ${rinfo.address}:${rinfo.port} 内容: ${msg.toString()}`);
-    wss.clients.forEach(client => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({
-          type: 'udp_response',
-          data: rinfo.address
-        }));
-      }
+    // wss.clients.forEach(client => {
+    //   if (client.readyState === WebSocket.OPEN) {
+    //     client.send(JSON.stringify({
+    //       type: 'udp_response',
+    //       data: rinfo.address
+    //     }));
+    //   }
+    // });
+    wss.on('connection', (ws) => {
+      console.log('客户端已连接');
+      ws.send(JSON.stringify({
+        type: 'udp_response',
+        data: rinfo.address
+      }));
     });
+
   }
   if (msg.toString() === currentRoomId) {
     remoteIp = rinfo.address;
