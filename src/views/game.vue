@@ -240,7 +240,7 @@ export default {
       score: 0,
       scorerival: 0,
       best_score: 0,
-      leasetime: 30,  // 多4秒用来平衡倒计时时间
+      leasetime: 8,  // 多4秒用来平衡倒计时时间
       gameOver: false,  // 真正游戏结束标志
       mygameOver: false, // online我的游戏结束标志
       remoteGameOver: false, // online对方游戏结束标志
@@ -327,15 +327,6 @@ export default {
     } else if (this.gamemodel === 'online') {
       this.scorerival = 0; // 初始化对手分数
     }
-    if (this.gamemodel === 'online') {
-      this.ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === 'gameOver') {
-          this.remoteGameOver = true;
-        }
-      };
-    }
-
   },
   beforeDestroy() {
     cancelAnimationFrame(this.animationFrameId);
@@ -435,9 +426,9 @@ export default {
         }
       } else {
         cancelAnimationFrame(this.animationFrameId);
-        this.mygameOver = true;
         try {
           await axios.get('http://localhost:3000/send-finish');
+          this.mygameOver = true;
         } catch (error) {
           console.error('Sending an end-of-game message failed:', error);
         }
@@ -452,6 +443,7 @@ export default {
     },
 
     handleGameOver() {
+      this.gameOver = true;
       setTimeout(() => {
         if (this.gamemodel === 'local') {
           this.showFirework = this.score > this.best_score;

@@ -228,7 +228,6 @@ app.all('/send-finish', (req, res) => {
   const client = dgram.createSocket('udp4');
   const port = 33333;
   const message = 'finish'; 
-
   client.send(message, port, targetIp, (err) => {
     client.close(); // 发送后关闭socket
     if (err) {
