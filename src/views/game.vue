@@ -282,22 +282,9 @@ export default {
       this.checkGameOverOnline();
     }
   },
-  mounted() {
-    const ws = new WebSocket('ws://localhost:3030');
-    this.ws = ws;
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log('收到UDP消息:', data);
-      if (data.type === 'udp_responseFinish') {
-        this.remoteGameOver = true;
-      }
-    };
-    console.log('Game ws启动于3030');
-    
-  },
   beforeDestroy() {
     if (this.ws) {
-      console.log('关闭Gmae前端ws on 3030');
+      console.log('关闭Game前端ws on 3030');
       this.ws.close();
     }
   },
@@ -309,7 +296,7 @@ export default {
     }
     this.gamemodel = this.$route.params.value;
     if (this.gamemodel === 'online') {
-      ws.onmessage = (event) => {
+      this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.type === 'gameOver') {
           this.remoteGameOver = true;
@@ -320,6 +307,17 @@ export default {
     
   },
   mounted() {
+    const ws = new WebSocket('ws://localhost:3030');
+    this.ws = ws;
+    this.ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('收到UDP消息:', data);
+      if (data.type === 'udp_responseFinish') {
+        this.remoteGameOver = true;
+      }
+    };
+    console.log('Game ws启动于3030');
+    
     window.addEventListener('resize', this.updateCenter);
     this.updateCenter();
     let that = this

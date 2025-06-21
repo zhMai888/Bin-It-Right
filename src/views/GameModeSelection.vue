@@ -70,13 +70,11 @@ export default {
         socket.emit('join_room', this.roomId);
         console.log(`local join to ${this.roomId} through socket`);
         //如果ws传来udp_response并且data是'startOnlineGame'，跳转到在线游戏页面
-        ws.onmessage = (event) => {
+        this.ws.onmessage = (event) => {
           const data = JSON.parse(event.data);
           console.log('收到UDP消息:', data);
           if (data.type === 'udp_response' && data.data === 'startOnlineGame') {
             this.$router.push('/game/online');
-            ws.close();
-            console.log('关闭前端ws on 3030');
           }
         };
       } catch (error) {
