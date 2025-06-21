@@ -18,7 +18,7 @@
         </div>
       </div>
     </transition>
-    <p class="online_text" v-if="gamemodel === 'online' && is_ready">Wait for another Player!!!</p>
+    <p class="online_text" v-if="gamemodel === 'online' && is_ready">Wait for another Player……</p>
   </div>
 </template>
 
@@ -79,10 +79,9 @@ export default {
           this.showBalloon = false;
         }, 800);
       } else {
-        this.is_ready = true;
-        
         try {
           await axios.get('http://localhost:3000/send-ready');
+          this.is_ready = true;
         } catch (e) {
           console.error('发送准备状态失败:', e);
         }
