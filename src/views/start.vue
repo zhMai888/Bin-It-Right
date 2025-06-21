@@ -1,3 +1,4 @@
+<script src="../api/user.js"></script>
 <template>
   <div class="eco-game-home">
     <!-- 背景和标题 -->
@@ -33,7 +34,7 @@
               class="leaderboard-item"
               :class="{ 'current-user': currentUser && user.username === currentUser.username }"
             >
-              <span class="rank">{{ index + 1 }}</span>
+              <span class="rank">{{ user.id }}</span>
               <span class="username">{{ user.username }}</span>
               <span class="score">{{ user.score }} 分</span>
             </div>
@@ -124,12 +125,13 @@
 </template>
 
 <script>
+import { Login, Register, getAllUsers } from '@/api/user';
+
 export default {
   name: 'EcoGameHome',
   data() {
     return {
       currentUser: null,
-      gameStarted: false,
       showLogin: false,
       showRegister: false,
       loginForm: {
@@ -139,170 +141,122 @@ export default {
       registerForm: {
         username: '',
         password: '',
-        email: ''
+        email: '',
+        bestScore:0
       },
-      leaderboard: [
-        { id: 1, username: 'Eco Master', score: 9850 },
-        { id: 2, username: 'Green Pioneer', score: 8720 },
-        { id: 3, username: 'Globe Defender', score: 7650 },
-        { id: 4, username: 'Eco Protecter', score: 6540 },
-        { id: 5, username: 'Son of Nature', score: 5430 },
-        
-      ],
-      registeredUsers: []
-    }
+      leaderboard: []  // 由后端获取动态刷新
+    };
   },
   created() {
-    this.refreshLeaderboard();
-    // 恢复登录状态
+    // 尝试恢复登录状态
     const savedUser = localStorage.getItem('eco_current_user');
     if (savedUser) {
       this.currentUser = JSON.parse(savedUser);
     }
-  },
-  activated() {
-    // keep-alive 返回页面时刷新排行榜
     this.refreshLeaderboard();
   },
-  computed: {
-    sortedLeaderboard() {
-      // 只显示前五名和当前用户（如不在前五名）
-      let sorted = [...this.leaderboard].sort((a, b) => b.score - a.score);
-      let top5 = sorted.slice(0, 5);
-      if (
-        this.currentUser &&
-        !top5.some(u => u.username === this.currentUser.username)
-      ) {
-        const current = sorted.find(u => u.username === this.currentUser.username);
-        if (current) top5.push(current);
-      }
-      return top5;
-    }
-  },
   methods: {
-    // 读取本地用户信息
-    loadUsers() {
-      try {
-        const fs = window.require ? window.require('fs') : null;
-        const path = window.require ? window.require('path') : null;
-        if (fs && path) {
-          const userPath = path.join(__dirname, '../../user-data.json');
-          if (fs.existsSync(userPath)) {
-            const data = fs.readFileSync(userPath, 'utf-8');
-            this.registeredUsers = JSON.parse(data);
-          }
-        } else {
-          // 浏览器环境，使用localStorage
-          const data = localStorage.getItem('eco_users');
-          if (data) {
-            this.registeredUsers = JSON.parse(data);
-          }
-        }
-      } catch (e) {
-        this.registeredUsers = [];
-      }
-    },
-    // 保存本地用户信息
-    saveUsers() {
-      try {
-        const fs = window.require ? window.require('fs') : null;
-        const path = window.require ? window.require('path') : null;
-        if (fs && path) {
-          const userPath = path.join(__dirname, '../../user-data.json');
-          fs.writeFileSync(userPath, JSON.stringify(this.registeredUsers, null, 2), 'utf-8');
-        } else {
-          // 浏览器环境，使用localStorage
-          localStorage.setItem('eco_users', JSON.stringify(this.registeredUsers));
-        }
-      } catch (e) {
-        alert('用户信息保存失败！');
-      }
-    },
     goToGame() {
       if (!this.currentUser) {
         alert('Please log in or register first!');
         this.showLogin = true;
         return;
       }
-      // 跳转到游戏模式选择界面
       this.$router.push({ name: 'GameModeSelection' });
     },
     goToPokedex() {
       this.$router.push({ name: 'Pokedex' });
     },
 
+    // 通过后端接口刷新排行榜
     refreshLeaderboard() {
-      // 读取本地用户信息
-      this.loadUsers();
-      // 合并演示账号和注册用户
-      let users = [
-         { id: 1, username: 'Eco Master', score: 9850 },
-        { id: 2, username: 'Green Pioneer', score: 8720 },
-        { id: 3, username: 'Globe Defender', score: 7650 },
-        { id: 4, username: 'Eco Protecter', score: 6540 },
-        { id: 5, username: 'Son of Nature', score: 5430 },
-      ];
-      // 加入注册用户
-      this.registeredUsers.forEach((u, idx) => {
-        users.push({
-          id: 100 + idx,
-          username: u.username,
-          score: typeof u.score === 'number' ? u.score : 0
-        });
-      });
-      this.leaderboard = users;
+      getAllUsers()
+          .then(res => {
+            // 假设返回格式是 [{username, bestScore}, ...]
+            // 给数据加个 id，且排序（bestScore降序）
+            // console.log(res)
+            this.leaderboard = res.data
+                .map((u, idx) => ({
+                  id: idx + 1,
+                  username: u.username,
+                  score: u.bestScore || 0
+                }))
+                .sort((a, b) => b.score - a.score);
+          })
+          .catch(err => {
+            alert('刷新排行榜失败: ' + (err.response?.data?.message || err.message));
+          });
     },
+
     handleLogin() {
-      this.loadUsers();
-      const user = this.registeredUsers.find(
-        u => u.username === this.loginForm.username &&
-             u.password === this.loginForm.password
-      );
-      if (user) {
-        this.currentUser = {
-          username: user.username,
-          email: user.email
-        };
-        localStorage.setItem('eco_current_user', JSON.stringify(this.currentUser));
-        this.showLogin = false;
-        this.loginForm = { username: '', password: '' };
-        alert('Success！');
-        this.refreshLeaderboard();
-      } else {
-        alert('Wrong username or password!');
-      }
+      Login(this.loginForm)
+          .then(res => {
+            console.log(res)
+            const user = res.data.user;
+            if (user && user.username) {
+              this.currentUser = {
+                id: user.rank,
+                username: user.username,
+                score: user.bestScore || 0,
+              };
+              localStorage.setItem('eco_current_user', JSON.stringify(this.currentUser));
+              this.showLogin = false;
+              this.loginForm = { username: '', password: '' };
+              alert(`登录成功！您的当前排名为第 ${user.rank} 名`);
+              this.refreshLeaderboard();
+            } else {
+              alert('登录失败：用户名或密码错误');
+            }
+          })
+          .catch(err => {
+            alert('登录失败: ' + (err.response?.data?.message || err.message));
+          });
     },
+
     handleRegister() {
-      this.loadUsers();
-      const usernameExists = this.registeredUsers.some(
-        u => u.username === this.registerForm.username
-      );
-      if (usernameExists) {
-        alert('Username already exists!');
-        return;
-      }
-      this.registeredUsers.push({
-        username: this.registerForm.username,
-        password: this.registerForm.password,
-        email: this.registerForm.email,
-        score: 0 // 新用户初始分数
-      });
-      this.saveUsers();
-      this.showRegister = false;
-      this.registerForm = { username: '', password: '', email: '' };
-      alert('Registration successful!');
-      this.showLogin = true;
-      this.refreshLeaderboard();
+      Register(this.registerForm)
+          .then(res => {
+            alert('注册成功！请登录');
+            this.showRegister = false;
+            this.registerForm = { username: '', password: '', email: '' };
+            this.showLogin = true;
+            this.refreshLeaderboard();
+          })
+          .catch(err => {
+            alert('注册失败: ' + (err.response?.data?.message || err.message));
+          });
     },
+
     logout() {
       this.currentUser = null;
-      this.gameStarted = false;
       localStorage.removeItem('eco_current_user');
       this.refreshLeaderboard();
     }
+  },
+  computed: {
+    sortedLeaderboard() {
+      // 取前五名
+      const sorted = [...this.leaderboard].sort((a, b) => b.score - a.score);
+      const top5 = sorted.slice(0, 5);
+
+      // 如果当前用户不在前五，就把它也 push 进来，且保持它的 id（rank）
+      if (
+          this.currentUser &&
+          !top5.some(u => u.username === this.currentUser.username)
+      ) {
+        top5.push({
+          id: this.currentUser.id,
+          username: this.currentUser.username,
+          score: this.currentUser.score,
+        });
+      }
+      // console.log(top5)
+      return top5;
+    }
   }
-}
+};
 </script>
+
 
 <style scoped>
 .eco-game-home {
