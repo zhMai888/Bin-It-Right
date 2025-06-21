@@ -194,6 +194,7 @@ import Firework from '@/components/fireworks/fireworks.vue'
 import Countdown from '@/components/countdown/countdown.vue'
 import GameIntro from '@/components/gameIntro/gameIntro.vue';
 import Rain from '@/components/rain/rain.vue';
+import { updateBestScore } from '@/api/user';
 
 // const ws = new WebSocket('ws://localhost:3030');
 
@@ -325,6 +326,18 @@ export default {
       return;
     }
     this.gamemodel = this.$route.params.value;
+    if (this.gamemodel === 'local') {
+      // 从localStorage获取最佳分数
+      const ecoCurrentUser = localStorage.getItem('eco_current_user');
+      if (ecoCurrentUser) {
+        const user = JSON.parse(ecoCurrentUser);
+        this.best_score = user.score || 0;
+      } else {
+        this.best_score = 0;
+      }
+    } else if (this.gamemodel === 'online') {
+      this.scorerival = 0; // 初始化对手分数
+    }
     if (this.gamemodel === 'online') {
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -396,13 +409,37 @@ export default {
         cancelAnimationFrame(this.animationFrameId);
 
         this.handleGameOver();
+
+        // 记录
+        if (this.score > this.best_score) {
+          // 修改localStorage中的score
+          const ecoCurrentUser = localStorage.getItem('eco_current_user');
+          if (ecoCurrentUser) {
+            const user = JSON.parse(ecoCurrentUser);
+            user.score = this.score;
+            localStorage.setItem('eco_current_user', JSON.stringify(user));
+          }
+          // 更新数据库
+          try {
+            // 获取当前用户ID
+            const ecoCurrentUser = localStorage.getItem('eco_current_user');
+            if (!ecoCurrentUser) {
+              throw new Error('The current user is not logged in or the information is missing');
+            }
+            const user = JSON.parse(ecoCurrentUser);
+            let userId = user.id;
+            await updateBestScore(userId,this.score);
+          } catch (error) {
+            alert('Update Best Score Failed:', error);
+          }
+        }
       } else {
         cancelAnimationFrame(this.animationFrameId);
         this.mygameOver = true;
         try {
           await axios.get('http://localhost:3000/send-finish');
         } catch (error) {
-          console.error('发送游戏结束消息失败:', error);
+          console.error('Sending an end-of-game message failed:', error);
         }
       }
     },
