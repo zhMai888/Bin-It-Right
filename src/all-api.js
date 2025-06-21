@@ -13,7 +13,7 @@ app.use(express.json());
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',     // 替换为你的 MySQL 用户名
-    password: 'WLkq2022', // 替换为你的 MySQL 密码
+    password: '123456', // 替换为你的 MySQL 密码
     database: 'bin'
 });
 
