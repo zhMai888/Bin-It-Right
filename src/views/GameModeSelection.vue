@@ -75,7 +75,7 @@ export default {
           console.log('收到UDP消息:', data);
           if (data.type === 'udp_response' && data.data === 'startOnlineGame') {
             this.$router.push('/game/online');
-            this.ws.close(); // 关闭 WebSocket 连接
+            this.ws.close();
           }
         };
       } catch (error) {
@@ -112,6 +112,7 @@ export default {
                 this.$router.push('/game/online');
                 this.ws.close(); // 关闭 WebSocket 连接
                 
+                this.ws.close();
               } else {
                 console.error('加入房间失败:', response.data.message);
               }

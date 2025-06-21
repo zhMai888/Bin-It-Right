@@ -282,7 +282,7 @@ export default {
       this.checkGameOverOnline();
     }
   },
-  
+
   created() {
     
     // 设置 WebSocket 消息监听
@@ -318,7 +318,7 @@ export default {
     }, 2000);
 
     this.startAnimation();
-
+    
     // 得到游戏模式    
     if (!this.$route.params.value || (this.$route.params.value !== 'local' && this.$route.params.value !== 'online')) {
       this.$router.push({ name: 'login' });
@@ -333,6 +333,7 @@ export default {
         }
       };
     }
+
   },
   beforeDestroy() {
     cancelAnimationFrame(this.animationFrameId);

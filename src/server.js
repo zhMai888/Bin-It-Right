@@ -62,7 +62,7 @@ function generateRoomId() {
 
 // 创建UDP服务器
 const udpServer = dgram.createSocket('udp4');
-const UDP_PORT = 33333;
+const UDP_PORT = 33333;//listen port for udp
 
 udpServer.on('listening', () => {
   udpServer.setBroadcast(true);
@@ -72,7 +72,9 @@ udpServer.on('listening', () => {
 udpServer.on('message', (msg, rinfo) => {
   if (rinfo.port == 33333) {
     remoteIp = rinfo.address;
-    console.log(`接收到广播消息来自 ${rinfo.address}:${rinfo.port} 内容: ${msg.toString()}`);
+    console.log(`接收到udpServer广播消息来自 ${rinfo.address}:${rinfo.port} 内容: ${msg.toString()}`);
+    console.log('remoteIp=',remoteIp);
+    
     wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({
@@ -81,13 +83,14 @@ udpServer.on('message', (msg, rinfo) => {
         }));
       }
     });
+    
   }
   if (msg.toString() === currentRoomId) {
+    remoteIp = rinfo.address;//从客户端发来了roomId 服务端获取到remote IP   
     console.log("remoteIP=",remoteIp);
-    remoteIp = rinfo.address; // 更新remoteIp为发送方的IP地址
     const response = getLocalIP();
-    udpServer.send(response, UDP_PORT, rinfo.address, () => {
-      //websocket让前端跳转
+    udpServer.send(response, UDP_PORT, rinfo.address, () => {//把自己的ip给客户端
+      //websocket让服务器的前端跳转
       wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({
@@ -100,6 +103,7 @@ udpServer.on('message', (msg, rinfo) => {
       console.log("开始游戏");
     });
   }else if(msg.toString() === 'ready') {
+    // remoteIp = rinfo.address;
     console.log(remoteIp);
     
     // remoteIp = rinfo.address;
@@ -149,13 +153,14 @@ app.all('/send-udp-broadcast', (req, res) => {
       return res.status(400).json({ success: false, message: '未提供房间码' });
     }
     const message = Buffer.from(roomId);
-
     client.send(message, 0, message.length, UDP_PORT, '255.255.255.255', (err) => {
       client.close();
       if (err) {
         console.error('发送UDP广播时出错:', err);
         res.status(500).json({ success: false, message: '发送UDP广播失败' });
       } else {
+        console.log('udp广播发射到33333');
+        
         res.json({ success: true, message: `UDP广播从 ${localIp} 发送成功` });
       }
     });

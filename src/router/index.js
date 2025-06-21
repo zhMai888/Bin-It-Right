@@ -3,6 +3,7 @@ import VueRouter from 'vue-router'
 import start from '../views/start.vue'
 import game from '../views/game.vue';
 import GameModeSelection from '../views/GameModeSelection.vue';
+import Pokedex from "@/views/Pokedex.vue";
 
 Vue.use(VueRouter)
 
@@ -29,6 +30,14 @@ const routes = [
     component: game,
     meta: {
       KeepAlive: true,
+      requireAuth: true
+    }
+  },
+  {
+    path: '/Pokedex',
+    name: 'Pokedex',
+    component: Pokedex,
+    meta: {
       requireAuth: true
     }
   }
