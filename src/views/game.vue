@@ -211,7 +211,7 @@ export default {
       trash: [
         {id: 1, img: require("../assets/trash/bananapeel.png"), typeid: 5, name: 'banana peel', description: 'banana peel is kitchen waste, can be composted.'},
         {id: 2, img: require("../assets/trash/bone.png"), typeid: 5, name: 'bone', description: 'bone is kitchen waste, can be composted.'},
-        {id: 3, img: require("../assets/trash/cigarette.png"), typeid: 4, name: 'cigarette', description: 'cigarette butts are hazardous waste, should be disposed of properly.'},
+        {id: 3, img: require("../assets/trash/butt.png"), typeid: 4, name: 'cigarette', description: 'cigarette butts are hazardous waste, should be disposed of properly.'},
         {id: 4, img: require("../assets/trash/eggshell.png"), typeid: 5, name: 'egg shell', description: 'egg shells are kitchen waste, can be composted.'},
         {id: 5, img: require("../assets/trash/fishbone.png"), typeid: 5, name: 'fish bone', description: 'fish bones are kitchen waste, can be composted.'},
         {id: 6, img: require("../assets/trash/lighter.png"), typeid: 3, name: 'lighter', description: 'lighter is non-recyclable waste, should be disposed of properly.'},
