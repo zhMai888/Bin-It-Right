@@ -24,8 +24,6 @@
 
 <script>
 import axios from 'axios';
-const ws = new WebSocket('ws://localhost:3030');
-console.log('GameIntro ws启动于3030');
 
 
 export default {
@@ -44,20 +42,32 @@ export default {
       imageLoaded: false,
       gamemodel: null,
       is_ready: false,
-      remote_ready: false
+      remote_ready: false,
+      ws: null
     };
   },
-  created() {
-    this.getmodel();
-
-    // 设置 WebSocket 消息监听
-    ws.onmessage = (event) => {
+  mounted(){
+    const ws = new WebSocket('ws://localhost:3030');
+    this.ws = ws;
+    this.ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       console.log('收到UDP消息:', data);
       if (data.type === 'udp_responseReady') {
         this.remote_ready = true;
       }
     };
+    console.log('GameIntro ws启动于3030');   
+  },
+  beforeDestroy(){
+    if (this.ws) {
+      console.log('关闭GameIntro前端ws on 3030');
+      this.ws.close();
+    }
+  },
+  created() {
+    this.getmodel();
+    // 设置 WebSocket 消息监听
+    
   },
   watch: {
     remote_ready() {

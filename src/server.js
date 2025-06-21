@@ -71,21 +71,16 @@ udpServer.on('listening', () => {
 udpServer.on('message', (msg, rinfo) => {
   if (rinfo.port == 33333) {
     console.log(`接收到广播消息来自 ${rinfo.address}:${rinfo.port} 内容: ${msg.toString()}`);
-    // wss.clients.forEach(client => {
-    //   if (client.readyState === WebSocket.OPEN) {
-    //     client.send(JSON.stringify({
-    //       type: 'udp_response',
-    //       data: rinfo.address
-    //     }));
-    //   }
-    // });
-    wss.on('connection', (ws) => {
-      console.log('客户端已连接');
-      ws.send(JSON.stringify({
-        type: 'udp_response',
-        data: rinfo.address
-      }));
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({
+          type: 'udp_response',
+          data: rinfo.address
+        }));
+      }
     });
+    
+    
 
   }
   if (msg.toString() === currentRoomId) {

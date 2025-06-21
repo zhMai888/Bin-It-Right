@@ -15,8 +15,8 @@
 <script>
 import axios from 'axios';
 import io from 'socket.io-client';
-const ws = new WebSocket('ws://localhost:3030');
-console.log('GameModeSelection ws启动于3030');
+
+
 
 
 async function getLocalNetworkIP() {
@@ -42,15 +42,21 @@ export default {
     return {
       roomId: null,
       showJoinInput: false,
-      joinRoomId: ''
+      joinRoomId: '',
+      ws : null
     }
   },
-  // beforeDestroy(){
-  //   if (ws) {
-  //     console.log('关闭前端ws on 3030');
-  //     ws.close();
-  //   }
-  // },
+  mounted() {
+    this.ws = new WebSocket('ws://localhost:3030');
+    console.log('GameModeSelection ws启动于3030');
+
+  },
+  beforeDestroy(){
+    if (this.ws) {
+      console.log('关闭GameModeSelection前端ws on 3030');
+      this.ws.close();
+    }
+  },
   methods: {
     goToSinglePlayer() {
       // 跳转到单人游戏页面
@@ -89,7 +95,7 @@ export default {
             roomId: this.joinRoomId
           }
         });
-        ws.onmessage = async (event) => {
+        this.ws.onmessage = async (event) => {
           const data = JSON.parse(event.data);
           if (data.type === 'udp_response') {
             console.log('收到UDP回复:', data.data);

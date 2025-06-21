@@ -195,7 +195,7 @@ import Countdown from '@/components/countdown/countdown.vue'
 import GameIntro from '@/components/gameIntro/gameIntro.vue';
 import Rain from '@/components/rain/rain.vue';
 
-const ws = new WebSocket('ws://localhost:3030');
+// const ws = new WebSocket('ws://localhost:3030');
 
 export default {
   components: {
@@ -261,7 +261,8 @@ export default {
       animateScore: false,
       mistake: [],  // 错误垃圾记录
       showMistake: false,
-      showNoMistake: false
+      showNoMistake: false,
+      ws:null
     };
   },
   watch: {
@@ -281,6 +282,25 @@ export default {
       this.checkGameOverOnline();
     }
   },
+  mounted() {
+    const ws = new WebSocket('ws://localhost:3030');
+    this.ws = ws;
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('收到UDP消息:', data);
+      if (data.type === 'udp_responseFinish') {
+        this.remoteGameOver = true;
+      }
+    };
+    console.log('Game ws启动于3030');
+    
+  },
+  beforeDestroy() {
+    if (this.ws) {
+      console.log('关闭Gmae前端ws on 3030');
+      this.ws.close();
+    }
+  },
   created() {
     // 得到游戏模式    
     if (!this.$route.params.value || (this.$route.params.value !== 'local' && this.$route.params.value !== 'online')) {
@@ -297,13 +317,7 @@ export default {
       };
     }
     // 设置 WebSocket 消息监听
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log('收到UDP消息:', data);
-      if (data.type === 'udp_responseFinish') {
-        this.remoteGameOver = true;
-      }
-    };
+    
   },
   mounted() {
     window.addEventListener('resize', this.updateCenter);
