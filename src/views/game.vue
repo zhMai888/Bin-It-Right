@@ -195,7 +195,7 @@ import Countdown from '@/components/countdown/countdown.vue'
 import GameIntro from '@/components/gameIntro/gameIntro.vue';
 import Rain from '@/components/rain/rain.vue';
 
-const ws = new WebSocket('ws://localhost:3031');
+const ws = new WebSocket('ws://localhost:3030');
 
 export default {
   components: {

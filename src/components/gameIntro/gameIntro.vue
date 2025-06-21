@@ -24,7 +24,9 @@
 
 <script>
 import axios from 'axios';
-const ws = new WebSocket('ws://localhost:3031');
+const ws = new WebSocket('ws://localhost:3030');
+console.log('GameIntro ws启动于3030');
+
 
 export default {
   name: 'GameIntro',
