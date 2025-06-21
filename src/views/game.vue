@@ -240,7 +240,7 @@ export default {
       score: 0,
       scorerival: 0,
       best_score: 0,
-      leasetime: 8,  // 多4秒用来平衡倒计时时间
+      leasetime: 64,  // 多4秒用来平衡倒计时时间
       gameOver: false,  // 真正游戏结束标志
       mygameOver: false, // online我的游戏结束标志
       remoteGameOver: false, // online对方游戏结束标志
@@ -296,8 +296,6 @@ export default {
     this.updateCenter();
     let that = this
     setInterval(() => {
-      console.log(this.scorerival);
-      
       if (this.leasetime > 0 && this.gameIntro) {
         this.leasetime--;
       } else if (this.leasetime === 0 && !this.showTimeout && !this.gameOver) {

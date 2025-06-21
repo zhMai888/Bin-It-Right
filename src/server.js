@@ -140,7 +140,7 @@ udpServer.on('message', (msg, rinfo) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({
           type: 'udp_responseScore',
-          data: `remoteScore is ${msg.toString().substring(5)} from ${rinfo.address}`
+          data: msg.toString().substring(5)
         }));
       }
     });  
