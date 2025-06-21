@@ -6,6 +6,7 @@ const { Server } = require('socket.io');
 const os = require('os');
 const dgram = require('dgram');
 const WebSocket = require('ws');
+const { log } = require('console');
 const wss = new WebSocket.Server({ port: 3030 });
 // const wss2 = new WebSocket.Server({ port: 3031 });
 
@@ -85,10 +86,8 @@ udpServer.on('message', (msg, rinfo) => {
     
   }
   if (msg.toString() === currentRoomId) {
-    remoteIp = rinfo.address;//从客户端发来了roomId 服务端获取到remote IP
-    console.log(remoteIp);
-
-    
+    remoteIp = rinfo.address;//从客户端发来了roomId 服务端获取到remote IP   
+    console.log("remoteIP=",remoteIp);
     const response = getLocalIP();
     udpServer.send(response, UDP_PORT, rinfo.address, () => {//把自己的ip给客户端
       //websocket让服务器的前端跳转

@@ -184,7 +184,7 @@ export default {
                 .sort((a, b) => b.score - a.score);
           })
           .catch(err => {
-            alert('刷新排行榜失败: ' + (err.response?.data?.message || err.message));
+            alert('Failed to refresh the leaderboard.: ' + (err.response?.data?.message || err.message));
           });
     },
 
@@ -195,35 +195,36 @@ export default {
             const user = res.data.user;
             if (user && user.username) {
               this.currentUser = {
-                id: user.rank,
+                id: user.id,
                 username: user.username,
                 score: user.bestScore || 0,
+                rank: user.rank || 0 
               };
               localStorage.setItem('eco_current_user', JSON.stringify(this.currentUser));
               this.showLogin = false;
               this.loginForm = { username: '', password: '' };
-              alert(`登录成功！您的当前排名为第 ${user.rank} 名`);
+              alert(`Login successful! Your current ranking is: ${user.rank} `);
               this.refreshLeaderboard();
             } else {
-              alert('登录失败：用户名或密码错误');
+              alert('Login failed: The username or password is incorrect');
             }
           })
           .catch(err => {
-            alert('登录失败: ' + (err.response?.data?.message || err.message));
+            alert('Login failed: ' + (err.response?.data?.message || err.message));
           });
     },
 
     handleRegister() {
       Register(this.registerForm)
           .then(res => {
-            alert('注册成功！请登录');
+            alert('Registration Successful! Please log in');
             this.showRegister = false;
             this.registerForm = { username: '', password: '', email: '' };
             this.showLogin = true;
             this.refreshLeaderboard();
           })
           .catch(err => {
-            alert('注册失败: ' + (err.response?.data?.message || err.message));
+            alert('Registration failed: ' + (err.response?.data?.message || err.message));
           });
     },
 
@@ -245,7 +246,7 @@ export default {
           !top5.some(u => u.username === this.currentUser.username)
       ) {
         top5.push({
-          id: this.currentUser.id,
+          id: this.currentUser.rank,
           username: this.currentUser.username,
           score: this.currentUser.score,
         });

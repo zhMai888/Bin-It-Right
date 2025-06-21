@@ -110,6 +110,8 @@ export default {
                 // 加入房间成功后的逻辑
                 console.log("加入房间成功");//已经连接到另一台机器的后端
                 this.$router.push('/game/online');
+                this.ws.close(); // 关闭 WebSocket 连接
+                
                 this.ws.close();
               } else {
                 console.error('加入房间失败:', response.data.message);

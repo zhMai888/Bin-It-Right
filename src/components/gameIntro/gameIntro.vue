@@ -15,6 +15,14 @@
             <p>Welcome to the game!</p>
             <p>Please click "Yes" to start your game.</p>
           </div>
+          <el-carousel trigger="click" height="350px" :interval="3500" arrow="always" class="carousel">
+            <el-carousel-item
+              v-for="(img, index) in carouselImages"
+              :key="index"
+            >
+              <img :src="img" class="carousel-img" />
+            </el-carousel-item>
+          </el-carousel>
         </div>
       </div>
     </transition>
@@ -43,7 +51,8 @@ export default {
       gamemodel: null,
       is_ready: false,
       remote_ready: false,
-      ws: null
+      ws: null,
+      carouselImages: []
     };
   },
   mounted(){
@@ -66,7 +75,18 @@ export default {
   },
   created() {
     this.getmodel();
-    // 设置 WebSocket 消息监听
+    if (this.gamemodel === 'local') {
+      this.carouselImages = [
+        require('@/assets/Intro/local/1.png'),
+        require('@/assets/Intro/local/2.png'),
+        require('@/assets/Intro/local/3.png')
+      ];
+    } else {
+      this.carouselImages = [
+        require('@/assets/Intro/online/1.png'),
+        require('@/assets/Intro/local/2.png'),
+      ];
+    }
     
   },
   watch: {
@@ -175,6 +195,25 @@ export default {
   font-weight: bold;
   opacity: 0.8;
 }
+.el-carousel {
+  width: 670px;
+  height: 350px;
+  margin: 0 auto;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.carousel-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 
 .speech-bubble {
   position: absolute;

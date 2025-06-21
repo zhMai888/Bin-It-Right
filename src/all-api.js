@@ -20,9 +20,9 @@ const db = mysql.createConnection({
 // 测试数据库连接
 db.connect((err) => {
     if (err) {
-        console.error('数据库连接失败：', err);
+        console.error('The database connection failed: ', err);
     } else {
-        console.log('成功连接到数据库');
+        console.log('Successfully connected to the database');
     }
 });
 
@@ -31,8 +31,8 @@ app.get('/api/user/all', (req, res) => {
     const sql = 'SELECT id, username, bestScore FROM user ORDER BY bestScore DESC LIMIT 5';
     db.query(sql, (err, results) => {
         if (err) {
-            console.error('查询用户列表出错:', err);
-            return res.status(500).json({ message: '获取用户列表失败' });
+            console.error('An error occurred querying the list of users:', err);
+            return res.status(500).json({ message: 'Failed to get the user list' });
         }
         res.json(results);
     });
@@ -42,17 +42,17 @@ app.get('/api/user/all', (req, res) => {
 app.post('/api/user/login', (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
-        return res.status(400).json({ message: '用户名和密码不能为空' });
+        return res.status(400).json({ message: 'The username and password cannot be empty' });
     }
 
     const sql = 'SELECT id, username, bestScore FROM user WHERE username = ? AND password = ? LIMIT 1';
     db.query(sql, [username, password], (err, results) => {
         if (err) {
             console.error('查询出错:', err);
-            return res.status(500).json({ message: '数据库查询失败' });
+            return res.status(500).json({ message: 'The database query failed' });
         }
         if (results.length === 0) {
-            return res.status(401).json({ message: '用户名或密码错误' });
+            return res.status(401).json({ message: 'Wrong username or password' });
         }
 
         const user = results[0];
@@ -61,14 +61,14 @@ app.post('/api/user/login', (req, res) => {
         const rankSql = 'SELECT COUNT(*) AS `rank` FROM user WHERE bestScore > ?';
         db.query(rankSql, [user.bestScore], (err2, rankResult) => {
             if (err2) {
-                console.error('查询排名出错:', err2);
-                return res.status(500).json({ message: '获取用户排名失败' });
+                console.error('There was an error in the query ranking:', err2);
+                return res.status(500).json({ message: 'Failed to get user rankings' });
             }
 
             const rank = rankResult[0].rank + 1;
 
             return res.json({
-                message: '登录成功',
+                message: 'Login successful',
                 user: {
                     id: user.id,
                     username: user.username,
@@ -87,7 +87,7 @@ app.post('/api/user/register', (req, res) => {
     const { username, password, email, bestScore } = req.body;
 
     if (!username || !password) {
-        return res.status(400).json({ message: '用户名和密码不能为空' });
+        return res.status(400).json({ message: 'The username and password cannot be empty' });
     }
 
     // 先查有没有同名用户
@@ -95,23 +95,23 @@ app.post('/api/user/register', (req, res) => {
     db.query(checkSql, [username], (err, results) => {
         if (err) {
             console.error('查询出错:', err);
-            return res.status(500).json({ message: '数据库查询失败' });
+            return res.status(500).json({ message: 'The database query failed' });
         }
 
         if (results.length > 0) {
             // 用户名已存在
-            return res.status(409).json({ message: '用户名已存在，无法注册' });
+            return res.status(409).json({ message: 'The username already exists and cannot be registered' });
         }
 
         // ✅ 定义插入语句在这里
         const insertSql = 'INSERT INTO user (username, password, email, bestScore) VALUES (?, ?, ?, ?)';
         db.query(insertSql, [username, password, email, bestScore || 0], (err, result) => {
             if (err) {
-                console.error('插入出错:', err);
-                return res.status(500).json({ message: '注册失败' });
+                console.error('There was an insertion error:', err);
+                return res.status(500).json({ message: 'Registration failed' });
             }
 
-            return res.json({ message: '注册成功', userId: result.insertId });
+            return res.json({ message: 'Registration is successful', userId: result.insertId });
         });
     });
 });
@@ -132,10 +132,33 @@ app.get('/api/trash/:id', (req, res) => {
     const sql = 'SELECT * FROM trash WHERE id = ?';
     db.query(sql, [req.params.id], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (result.length === 0) return res.status(404).json({ message: '未找到该垃圾' });
+        if (result.length === 0) return res.status(404).json({ message: 'The trash was not found' });
         res.json(result[0]);
     });
 });
+
+
+// 更新user的bestScore
+app.post('/api/updateBestScore', (req, res) => {
+    const { userId, score } = req.body;
+
+    if (!userId || score == null) {
+        return res.status(400).json({ message: 'The necessary parameters are missing and the update fails' });
+    }
+
+    const sql = 'UPDATE user SET bestScore = ? WHERE id = ?';
+    db.query(sql, [score, userId], (err, result) => {
+        if (err) {
+            console.error('The update failed:', err);
+            return res.status(500).json({ message: 'The update failed' });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'The user was not found' });
+        }
+        res.json({ message: 'The update was successful' });
+    });
+});
+
 
 // 启动服务器
 app.listen(port, () => {
