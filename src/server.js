@@ -6,6 +6,7 @@ const { Server } = require('socket.io');
 const os = require('os');
 const dgram = require('dgram');
 const WebSocket = require('ws');
+const { log } = require('console');
 const wss = new WebSocket.Server({ port: 3030 });
 // const wss2 = new WebSocket.Server({ port: 3031 });
 
@@ -70,6 +71,7 @@ udpServer.on('listening', () => {
 
 udpServer.on('message', (msg, rinfo) => {
   if (rinfo.port == 33333) {
+    remoteIp = rinfo.address;
     console.log(`接收到广播消息来自 ${rinfo.address}:${rinfo.port} 内容: ${msg.toString()}`);
     wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
@@ -79,12 +81,10 @@ udpServer.on('message', (msg, rinfo) => {
         }));
       }
     });
-    
-    
-
   }
   if (msg.toString() === currentRoomId) {
-    remoteIp = rinfo.address;
+    console.log("remoteIP=",remoteIp);
+    remoteIp = rinfo.address; // 更新remoteIp为发送方的IP地址
     const response = getLocalIP();
     udpServer.send(response, UDP_PORT, rinfo.address, () => {
       //websocket让前端跳转
@@ -100,15 +100,17 @@ udpServer.on('message', (msg, rinfo) => {
       console.log("开始游戏");
     });
   }else if(msg.toString() === 'ready') {
+    console.log(remoteIp);
+    
     // remoteIp = rinfo.address;
     // const response = '';
     
       //websocket让前端跳转
-    wss2.clients.forEach(client => {
+    wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({
           type: 'udp_responseReady',
-          data: `remoteReady from ${rinfo.address}`
+          data: `remoteReady from ${remoteIp}`
         }));
       }
     });    
@@ -117,7 +119,7 @@ udpServer.on('message', (msg, rinfo) => {
     // const response = '';
     
       //websocket让前端跳转
-    wss2.clients.forEach(client => {
+    wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({
           type: 'udp_responseFinish',
