@@ -144,18 +144,18 @@ app.all('/get-local-ip', (req, res) => {
 });
 
 app.all('/send-udp-broadcast', (req, res) => {
-  const client = dgram.createSocket('udp4');
+  const udpclient = dgram.createSocket('udp4');
   let localIp = getLocalIP();
 
-  client.bind({ address: localIp }, () => {
-    client.setBroadcast(true);
+  udpclient.bind({ address: localIp }, () => {
+    udpclient.setBroadcast(true);
     const roomId = req.query.roomId || req.body.roomId;
     if (!roomId) {
       return res.status(400).json({ success: false, message: '未提供房间码' });
     }
     const message = Buffer.from(roomId);
-    client.send(message, 0, message.length, UDP_PORT, '255.255.255.255', (err) => {
-      client.close();
+    udpclient.send(message, 0, message.length, UDP_PORT, '255.255.255.255', (err) => {
+      udpclient.close();
       if (err) {
         console.error('发送UDP广播时出错:', err);
         res.status(500).json({ success: false, message: '发送UDP广播失败' });
@@ -179,12 +179,12 @@ app.all('/send-score', (req, res) => {
     });
   }
 
-  const client = dgram.createSocket('udp4');
+  const udpclient = dgram.createSocket('udp4');
   const port = 33333;
   const message = score.toString(); // 直接发送分数（字符串格式）
 
-  client.send(message, port, targetIp, (err) => {
-    client.close(); // 发送后关闭socket
+  udpclient.send(message, port, targetIp, (err) => {
+    udpclient.close(); // 发送后关闭socket
     if (err) {
       return res.status(500).json({ 
         success: false, 
