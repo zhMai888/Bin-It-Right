@@ -282,27 +282,9 @@ export default {
       this.checkGameOverOnline();
     }
   },
-  beforeDestroy() {
-    if (this.ws) {
-      console.log('关闭Game前端ws on 3030');
-      this.ws.close();
-    }
-  },
+
   created() {
-    // 得到游戏模式    
-    if (!this.$route.params.value || (this.$route.params.value !== 'local' && this.$route.params.value !== 'online')) {
-      this.$router.push({ name: 'login' });
-      return;
-    }
-    this.gamemodel = this.$route.params.value;
-    if (this.gamemodel === 'online') {
-      this.ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === 'gameOver') {
-          this.remoteGameOver = true;
-        }
-      };
-    }
+    
     // 设置 WebSocket 消息监听
     
   },
@@ -336,10 +318,31 @@ export default {
     }, 2000);
 
     this.startAnimation();
+    
+    // 得到游戏模式    
+    if (!this.$route.params.value || (this.$route.params.value !== 'local' && this.$route.params.value !== 'online')) {
+      this.$router.push({ name: 'login' });
+      return;
+    }
+    this.gamemodel = this.$route.params.value;
+    if (this.gamemodel === 'online') {
+      this.ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'gameOver') {
+          this.remoteGameOver = true;
+        }
+      };
+    }
+
   },
   beforeDestroy() {
     cancelAnimationFrame(this.animationFrameId);
     window.removeEventListener('resize', this.updateCenter);
+
+    if (this.ws) {
+      console.log('关闭Game前端ws on 3030');
+      this.ws.close();
+    }
   },
   computed: {
     handBottom() {
