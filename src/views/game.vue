@@ -195,6 +195,8 @@ import Countdown from '@/components/countdown/countdown.vue'
 import GameIntro from '@/components/gameIntro/gameIntro.vue';
 import Rain from '@/components/rain/rain.vue';
 import { updateBestScore } from '@/api/user';
+import axios from 'axios';
+import { getAllTrash } from '@/api/trash';
 
 // const ws = new WebSocket('ws://localhost:3030');
 
@@ -217,18 +219,7 @@ export default {
         { id: 4, type: 'hazardous', label: '有害' , img: require("../assets/bin/hazardous_waste.png"), emotion: null},
         { id: 5, type: 'kichen', label: '厨余' , img: require("../assets/bin/kitchen_waste.png"), emotion: null}
       ],
-      trash: [
-        {id: 1, img: require("../assets/trash/bananapeel.png"), typeid: 5, name: 'banana peel', description: 'banana peel is kitchen waste, can be composted.'},
-        {id: 2, img: require("../assets/trash/bone.png"), typeid: 5, name: 'bone', description: 'bone is kitchen waste, can be composted.'},
-        {id: 3, img: require("../assets/trash/butt.png"), typeid: 4, name: 'cigarette', description: 'cigarette butts are hazardous waste, should be disposed of properly.'},
-        {id: 4, img: require("../assets/trash/eggshell.png"), typeid: 5, name: 'egg shell', description: 'egg shells are kitchen waste, can be composted.'},
-        {id: 5, img: require("../assets/trash/fishbone.png"), typeid: 5, name: 'fish bone', description: 'fish bones are kitchen waste, can be composted.'},
-        {id: 6, img: require("../assets/trash/lighter.png"), typeid: 3, name: 'lighter', description: 'lighter is non-recyclable waste, should be disposed of properly.'},
-        {id: 7, img: require("../assets/trash/orangepeel.png"), typeid: 5, name: 'orange peel', description: 'orange peels are kitchen waste, can be composted.'},
-        {id: 8, img: require("../assets/trash/shabbyclothes.png"), typeid: 2, name: 'shabby clothes', description: 'shabby clothes are recyclable waste, can be donated or recycled.'},
-        {id: 9, img: require("../assets/trash/tissue.png"), typeid: 3, name: 'tissue', description: 'tissue is non-recyclable waste, should be disposed of properly.'},
-        {id: 10, img: require("../assets/trash/watermelonskin.png"), typeid: 5, name: 'watermelon skin', description: 'watermelon skins are kitchen waste, can be composted.'},
-      ],
+      trash: [],
       happy: ['😄','😆','ヾ(≧▽≦*)o','\^o^/','<(￣︶￣)↗[GOOD!]','(´▽`ʃ♡ƪ)','fantastic','unbelievable'],
       sad: ['😢', '💔','💢','(╥﹏╥)','(｡•́︿•̀｡)','(¬_¬")', '＞﹏＜','(╯︵╰,)', 'sad', 'careful'],
       hand: require('../assets/hand.png'),
@@ -285,9 +276,7 @@ export default {
   },
 
   created() {
-    
-    // 设置 WebSocket 消息监听
-    
+    this.getTrash();
   },
   mounted() {
     const ws = new WebSocket('ws://localhost:3030');
@@ -383,6 +372,17 @@ export default {
     }
   },
   methods: {
+    async getTrash(){
+      try {
+        const res = await getAllTrash();
+        this.trash = res.data.map(item => ({
+          ...item,
+          img: require(`@/assets/trash/${item.img}`)
+        }));
+      }catch (e) {
+        alert("Data Load Fault!!!")
+      }
+    },
     againClick(){
       location.reload();
     },
