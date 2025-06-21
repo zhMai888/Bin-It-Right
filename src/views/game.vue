@@ -296,6 +296,14 @@ export default {
         }
       };
     }
+    // 设置 WebSocket 消息监听
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('收到UDP消息:', data);
+      if (data.type === 'udp_responseFinish') {
+        this.remoteGameOver = true;
+      }
+    };
   },
   mounted() {
     window.addEventListener('resize', this.updateCenter);
@@ -365,7 +373,7 @@ export default {
       this.centerX = window.innerWidth / 2;
       this.centerY = window.innerHeight / 2;
     },
-    triggerTimeout() {
+    async triggerTimeout() {
       if (this.gamemodel === 'local') {
         this.gameOver = true;
         this.mygameOver = true;
@@ -376,8 +384,11 @@ export default {
       } else {
         cancelAnimationFrame(this.animationFrameId);
         this.mygameOver = true;
-        // // 可选：通知对方 gameOver（如需）
-        // ws.send(JSON.stringify({ type: 'gameOver' }));
+        try {
+          await axios.get('http://localhost:3000/send-finish');
+        } catch (error) {
+          console.error('发送游戏结束消息失败:', error);
+        }
       }
     },
     checkGameOverOnline() {
