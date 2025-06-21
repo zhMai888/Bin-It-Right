@@ -240,7 +240,7 @@ export default {
       score: 0,
       scorerival: 0,
       best_score: 0,
-      leasetime: 30,  // 多4秒用来平衡倒计时时间
+      leasetime: 8,  // 多4秒用来平衡倒计时时间
       gameOver: false,  // 真正游戏结束标志
       mygameOver: false, // online我的游戏结束标志
       remoteGameOver: false, // online对方游戏结束标志
@@ -286,6 +286,8 @@ export default {
       console.log('收到UDP消息:', data);
       if (data.type === 'udp_responseFinish') {
         this.remoteGameOver = true;
+      }else if (data.type === 'udp_responseScore') {
+        this.scorerival = data.data;
       }
     };
     console.log('Game ws启动于3030');
@@ -294,6 +296,8 @@ export default {
     this.updateCenter();
     let that = this
     setInterval(() => {
+      console.log(this.scorerival);
+      
       if (this.leasetime > 0 && this.gameIntro) {
         this.leasetime--;
       } else if (this.leasetime === 0 && !this.showTimeout && !this.gameOver) {
@@ -327,15 +331,6 @@ export default {
     } else if (this.gamemodel === 'online') {
       this.scorerival = 0; // 初始化对手分数
     }
-    if (this.gamemodel === 'online') {
-      this.ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === 'gameOver') {
-          this.remoteGameOver = true;
-        }
-      };
-    }
-
   },
   beforeDestroy() {
     cancelAnimationFrame(this.animationFrameId);
@@ -435,9 +430,9 @@ export default {
         }
       } else {
         cancelAnimationFrame(this.animationFrameId);
-        this.mygameOver = true;
         try {
           await axios.get('http://localhost:3000/send-finish');
+          this.mygameOver = true;
         } catch (error) {
           console.error('Sending an end-of-game message failed:', error);
         }
@@ -452,6 +447,7 @@ export default {
     },
 
     handleGameOver() {
+      this.gameOver = true;
       setTimeout(() => {
         if (this.gamemodel === 'local') {
           this.showFirework = this.score > this.best_score;
@@ -662,6 +658,15 @@ export default {
           this.mistake.push(g.img); // 记录错误垃圾图片地址(唯一定位)
           matchedBin.emotion = this.sad[Math.floor(Math.random() * this.sad.length)];
           matchedBin.correct = false;
+        }
+
+        // online发送分数到对手
+        if (this.gamemodel === 'online') {
+          axios.get(`http://localhost:3000/send-score`, {
+            params: {
+              score: this.score
+            }
+          });
         }
 
         if (this.binggoNum >= 10) {
