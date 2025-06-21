@@ -97,87 +97,92 @@
             </div>
           </div>
         </div>
-        <div v-if="gameOver" class="overlay">
-          <div v-if="this.gamemodel==='local'">
-            <div v-if="showTimeout" class="timeout-text">
-              <p v-if="best_score>=score"><span class="timeout-clock">⏰</span> Time out!</p>
-              <p v-else><span class="timeout-clock2">🎉</span> Congratulations!</p>
+        <div v-if="mygameOver && (gamemodel === 'local' || (gamemodel === 'online' && remoteGameOver))">
+          <div v-if="gameOver" class="overlay">
+            <div v-if="this.gamemodel==='local'">
+              <div v-if="showTimeout" class="timeout-text">
+                <p v-if="best_score>=score"><span class="timeout-clock">⏰</span> Time out!</p>
+                <p v-else><span class="timeout-clock2">🎉</span> Congratulations!</p>
+              </div>
+              <Firework
+                v-if="showFirework"
+                :particleCount="180"
+                :angle="90"
+                :spread="130"
+                :startVelocity="55"
+                :ticks="1000"
+                :colors="['#ff4b4b', '#ffd700', '#00e5ff', '#00ff7f', '#ff69b4']"
+                :x="centerX"
+                :y="centerY"
+              />
             </div>
-            <Firework
-              v-if="showFirework"
-              :particleCount="180"
-              :angle="90"
-              :spread="130"
-              :startVelocity="55"
-              :ticks="1000"
-              :colors="['#ff4b4b', '#ffd700', '#00e5ff', '#00ff7f', '#ff69b4']"
-              :x="centerX"
-              :y="centerY"
-            />
-          </div>
-          <div v-else>
-            <div v-if="showTimeout" class="timeout-text">
-              <p v-if="score > scorerival"><span class="timeout-clock2">🎉</span> Congratulations!</p>
-              <p v-else-if="score === scorerival"><span class="timeout-clock">🤝</span> Draw Level!</p>
-              <p v-else><span class="timeout-clock2">💀</span> Defeat!</p>
+            <div v-else>
+              <div v-if="showTimeout" class="timeout-text">
+                <p v-if="score > scorerival"><span class="timeout-clock2">🎉</span> Congratulations!</p>
+                <p v-else-if="score === scorerival"><span class="timeout-clock">🤝</span> Draw Level!</p>
+                <p v-else><span class="timeout-clock2">💀</span> Defeat!</p>
+              </div>
+              <Firework
+                v-if="showFirework"
+                :particleCount="180"
+                :angle="90"
+                :spread="130"
+                :startVelocity="55"
+                :ticks="1000"
+                :colors="['#ff4b4b', '#ffd700', '#00e5ff', '#00ff7f', '#ff69b4']"
+                :x="centerX"
+                :y="centerY"
+              />
+              <Rain v-if="showRain"/>
             </div>
-            <Firework
-              v-if="showFirework"
-              :particleCount="180"
-              :angle="90"
-              :spread="130"
-              :startVelocity="55"
-              :ticks="1000"
-              :colors="['#ff4b4b', '#ffd700', '#00e5ff', '#00ff7f', '#ff69b4']"
-              :x="centerX"
-              :y="centerY"
-            />
-            <Rain v-if="showRain"/>
-          </div>
-          <div v-if="showMistake" class="mistake-container">
-            <img src="../assets/mistakeboard.png" alt="" class="mistakeboard" draggable="false">
-            <div class="mistake-content">
-              <h2 style="position: absolute; top: -5%; left: 50%; transform: translateX(-50%);">Mistake Record</h2>
-              <div style="width: 700px; height: 380px;">
-                <div style="width: 670px; margin-top: 8%;">
-                  <div class="mistake-row header">
-                    <div class="col image">Picture</div>
-                    <div class="col name">Name</div>
-                    <div class="col type">Type</div>
-                    <div class="col desc">Introduction</div>
+            <div v-if="showMistake" class="mistake-container">
+              <img src="../assets/mistakeboard.png" alt="" class="mistakeboard" draggable="false">
+              <div class="mistake-content">
+                <h2 style="position: absolute; top: -5%; left: 50%; transform: translateX(-50%);">Mistake Record</h2>
+                <div style="width: 700px; height: 380px;">
+                  <div style="width: 670px; margin-top: 8%;">
+                    <div class="mistake-row header">
+                      <div class="col image">Picture</div>
+                      <div class="col name">Name</div>
+                      <div class="col type">Type</div>
+                      <div class="col desc">Introduction</div>
+                    </div>
+                    <div style="height: 300px; overflow-y: auto;">
+                      <ul class="mistake-list">
+                        <li v-for="(item, index) in mistake" :key="index" class="mistake-row">
+                          <div class="col image"><img :src="item.img" alt="mistake trash" /></div>
+                          <div class="col name">{{ item.name }}</div>
+                          <div class="col type">
+                            {{ item.typeid === 1 ? 'food' : item.typeid === 2 ? 'recyclable waste' : item.typeid === 3 ? 'unrecyclable waste' : item.typeid === 4 ? 'hazardous waste' : 'kichen waste' }}
+                          </div>
+                          <div class="col desc">{{ item.description }}</div>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
-                  <div style="height: 300px; overflow-y: auto;">
-                    <ul class="mistake-list">
-                      <li v-for="(item, index) in mistake" :key="index" class="mistake-row">
-                        <div class="col image"><img :src="item.img" alt="mistake trash" /></div>
-                        <div class="col name">{{ item.name }}</div>
-                        <div class="col type">
-                          {{ item.typeid === 1 ? 'food' : item.typeid === 2 ? 'recyclable waste' : item.typeid === 3 ? 'unrecyclable waste' : item.typeid === 4 ? 'hazardous waste' : 'kichen waste' }}
-                        </div>
-                        <div class="col desc">{{ item.description }}</div>
-                      </li>
-                    </ul>
+                  <div>
+                    <button @click="BackHomeClick" class="backhomeButton">
+                      <img src="../assets/backhome.png" alt="" style="width: 30px !important; height: 30px !important;">
+                    </button>
+                    <button @click="againClick" class="againButton" v-if="this.gamemodel == 'local'">
+                      <img src="../assets/again.png" alt="" style="width: 30px !important; height: 30px !important;">
+                    </button>
                   </div>
-                </div>
-                <div>
-                  <button @click="BackHomeClick" class="backhomeButton">
-                    <img src="../assets/backhome.png" alt="" style="width: 30px !important; height: 30px !important;">
-                  </button>
-                  <button @click="againClick" class="againButton">
-                    <img src="../assets/again.png" alt="" style="width: 30px !important; height: 30px !important;">
-                  </button>
                 </div>
               </div>
+            </div> 
+            <div v-if="showNoMistake">
+              <button @click="BackHomeClick" class="backhomeButton2">
+                <img src="../assets/backhome.png" alt="" style="width: 40px !important; height: 40px !important;">
+              </button>
+              <button @click="againClick" class="againButton2" v-if="this.gamemodel == 'local'">
+                <img src="../assets/again.png" alt="" style="width: 40px !important; height: 40px !important;">
+              </button>
             </div>
-          </div> 
-          <div v-if="showNoMistake">
-            <button @click="BackHomeClick" class="backhomeButton2">
-              <img src="../assets/backhome.png" alt="" style="width: 40px !important; height: 40px !important;">
-            </button>
-            <button @click="againClick" class="againButton2">
-              <img src="../assets/again.png" alt="" style="width: 40px !important; height: 40px !important;">
-            </button>
           </div>
+        </div>
+        <div v-else-if="gamemodel === 'online' && mygameOver && !remoteGameOver">
+          <div id="waiting"><p id="waitingtext">Wait for another Player……</p></div>
         </div>
       </div>
     </div>
@@ -189,6 +194,9 @@ import Firework from '@/components/fireworks/fireworks.vue'
 import Countdown from '@/components/countdown/countdown.vue'
 import GameIntro from '@/components/gameIntro/gameIntro.vue';
 import Rain from '@/components/rain/rain.vue';
+
+// const ws = new WebSocket('ws://localhost:3030');
+
 export default {
   components: {
     Firework,
@@ -240,8 +248,10 @@ export default {
       score: 0,
       scorerival: 0,
       best_score: 0,
-      leasetime: 12,  // 多4秒用来平衡倒计时时间
-      gameOver: false,
+      leasetime: 30,  // 多4秒用来平衡倒计时时间
+      gameOver: false,  // 真正游戏结束标志
+      mygameOver: false, // online我的游戏结束标志
+      remoteGameOver: false, // online对方游戏结束标志
       showTimeout: false,
       showFirework: false,
       showRain: false,
@@ -251,7 +261,8 @@ export default {
       animateScore: false,
       mistake: [],  // 错误垃圾记录
       showMistake: false,
-      showNoMistake: false
+      showNoMistake: false,
+      ws:null
     };
   },
   watch: {
@@ -263,17 +274,32 @@ export default {
           this.animateScore = true;
         });
       }
+    },
+    mygameOver() {
+      this.checkGameOverOnline();
+    },
+    remoteGameOver() {
+      this.checkGameOverOnline();
     }
   },
+
   created() {
-    // 得到游戏模式    
-    if (!this.$route.params.value || (this.$route.params.value !== 'local' && this.$route.params.value !== 'online')) {
-      this.$router.push({ name: 'login' });
-      return;
-    }
-    this.gamemodel = this.$route.params.value;
+    
+    // 设置 WebSocket 消息监听
+    
   },
   mounted() {
+    const ws = new WebSocket('ws://localhost:3030');
+    this.ws = ws;
+    this.ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('收到UDP消息:', data);
+      if (data.type === 'udp_responseFinish') {
+        this.remoteGameOver = true;
+      }
+    };
+    console.log('Game ws启动于3030');
+    
     window.addEventListener('resize', this.updateCenter);
     this.updateCenter();
     let that = this
@@ -292,10 +318,31 @@ export default {
     }, 2000);
 
     this.startAnimation();
+    
+    // 得到游戏模式    
+    if (!this.$route.params.value || (this.$route.params.value !== 'local' && this.$route.params.value !== 'online')) {
+      this.$router.push({ name: 'login' });
+      return;
+    }
+    this.gamemodel = this.$route.params.value;
+    if (this.gamemodel === 'online') {
+      this.ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'gameOver') {
+          this.remoteGameOver = true;
+        }
+      };
+    }
+
   },
   beforeDestroy() {
     cancelAnimationFrame(this.animationFrameId);
     window.removeEventListener('resize', this.updateCenter);
+
+    if (this.ws) {
+      console.log('关闭Game前端ws on 3030');
+      this.ws.close();
+    }
   },
   computed: {
     handBottom() {
@@ -341,29 +388,52 @@ export default {
       this.centerX = window.innerWidth / 2;
       this.centerY = window.innerHeight / 2;
     },
-    triggerTimeout() {
-      this.gameOver = true;
-      this.showTimeout = true;
-      cancelAnimationFrame(this.animationFrameId);
-      setTimeout(()=>{
+    async triggerTimeout() {
+      if (this.gamemodel === 'local') {
+        this.gameOver = true;
+        this.mygameOver = true;
+        this.showTimeout = true;
+        cancelAnimationFrame(this.animationFrameId);
+
+        this.handleGameOver();
+      } else {
+        cancelAnimationFrame(this.animationFrameId);
+        this.mygameOver = true;
+        try {
+          await axios.get('http://localhost:3000/send-finish');
+        } catch (error) {
+          console.error('发送游戏结束消息失败:', error);
+        }
+      }
+    },
+    checkGameOverOnline() {
+      if (this.gamemodel === 'online' && this.mygameOver && this.remoteGameOver) {
+        this.showTimeout = true;
+        cancelAnimationFrame(this.animationFrameId);
+        this.handleGameOver();
+      }
+    },
+
+    handleGameOver() {
+      setTimeout(() => {
         if (this.gamemodel === 'local') {
           this.showFirework = this.score > this.best_score;
         } else {
           this.showFirework = this.score > this.scorerival;
-        }
-        if (this.gamemodel === 'online') {
           this.showRain = this.score < this.scorerival;
         }
       }, 1000);
+
       setTimeout(() => {
         this.showTimeout = false;
         this.showFirework = false;
         this.showRain = false;
+
         this.mistake = [...new Set(this.mistake)];
         this.showMistake = this.mistake.length > 0;
 
-        if (this.showMistake){
-            this.mistake = this.mistake.map(imgPath => {
+        if (this.showMistake) {
+          this.mistake = this.mistake.map(imgPath => {
             const match = imgPath.match(/\/img\/([^/.]+)\./);
             if (!match) return null;
             const fileNameNoExt = match[1];
@@ -371,10 +441,9 @@ export default {
               const nameNoSpace = t.name.replace(/\s+/g, '').toLowerCase();
               return nameNoSpace === fileNameNoExt.toLowerCase();
             });
-
             return trashItem ? { ...trashItem } : null;
           }).filter(item => item !== null);
-        }else{
+        } else {
           this.showNoMistake = true;
         }
       }, 5000);
@@ -851,6 +920,24 @@ display: flex;
 justify-content: center;
 align-items: center;
 z-index: 1000;
+}
+#waiting{
+  margin: 0 !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); 
+  z-index: 1000;
+}
+#waitingtext{
+  font-size: 60px;
+  color: #ff6348;
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  transform: translate(-50%, -50%);
 }
 .timeout-text {
 position: absolute;

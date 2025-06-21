@@ -18,10 +18,14 @@
         </div>
       </div>
     </transition>
+    <p class="online_text" v-if="gamemodel === 'online' && is_ready">Wait for another Player……</p>
   </div>
 </template>
 
 <script>
+import axios from 'axios';
+
+
 export default {
   name: 'GameIntro',
   props: {
@@ -35,25 +39,78 @@ export default {
       visible: true,
       showBalloon: false,
       is_raise: false,
-      imageLoaded: false
+      imageLoaded: false,
+      gamemodel: null,
+      is_ready: false,
+      remote_ready: false,
+      ws: null
     };
+  },
+  mounted(){
+    const ws = new WebSocket('ws://localhost:3030');
+    this.ws = ws;
+    this.ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('收到UDP消息:', data);
+      if (data.type === 'udp_responseReady') {
+        this.remote_ready = true;
+      }
+    };
+    console.log('GameIntro ws启动于3030');   
+  },
+  beforeDestroy(){
+    if (this.ws) {
+      console.log('关闭GameIntro前端ws on 3030');
+      this.ws.close();
+    }
+  },
+  created() {
+    this.getmodel();
+    // 设置 WebSocket 消息监听
+    
+  },
+  watch: {
+    remote_ready() {
+      this.checkBothReady();
+    },
+    is_ready() {
+      this.checkBothReady();
+    }
   },
   methods: {
     onImageLoaded() {
-      // 图片加载完成后触发动画
       this.imageLoaded = true;
       this.$nextTick(() => {
         this.showBalloon = true;
       });
     },
-    startGame() {
-      this.is_raise = false;
-      setTimeout(() => {
-        this.showBalloon = false;
-      }, 800);
+    async startGame() {
+      if (this.gamemodel === 'local') {
+        this.is_raise = false;
+        setTimeout(() => {
+          this.showBalloon = false;
+        }, 800);
+      } else {
+        try {
+          this.is_raise = false;
+          await axios.get('http://localhost:3000/send-ready');
+          this.is_ready = true;
+        } catch (e) {
+          console.error('发送准备状态失败:', e);
+        }
+        // 提示对方等待（气泡已出现）
+        // remote_ready 的监听在 watch 中处理
+      }
+    },
+    checkBothReady() {
+      if (this.is_ready && this.remote_ready) {
+        this.is_raise = false;
+        setTimeout(() => {
+          this.showBalloon = false;
+        }, 800);
+      }
     },
     onEnterEnd() {
-      // 出现按钮
       setTimeout(() => {
         this.is_raise = true;
       }, 3000);
@@ -61,6 +118,14 @@ export default {
     onLeaveEnd() {
       this.visible = false;
       this.onConfirmed();
+    },
+    getmodel() {
+      const mode = this.$route.params.value;
+      if (!mode || (mode !== 'local' && mode !== 'online')) {
+        this.$router.push({ name: 'login' });
+        return;
+      }
+      this.gamemodel = mode;
     }
   }
 };
@@ -172,6 +237,15 @@ export default {
 
 .balloon-rise-leave-active {
   animation: fly-away 0.8s ease-in forwards;
+}
+
+.online_text{
+  font-size: 40px;
+  color: #ff6348;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 30px;
 }
 
 @keyframes rise-up {

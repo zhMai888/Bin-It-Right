@@ -7,10 +7,19 @@ const os = require('os');
 const dgram = require('dgram');
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 3030 });
+// const wss2 = new WebSocket.Server({ port: 3031 });
+
 
 // 配置中间件
 app.use(cors());
 app.use(express.json());
+
+var remoteIp = null;
+// 房间管理
+let currentRoomId = null;
+
+// var remoteReady=false;
+// var selfReady = false;
 
 // 创建HTTP服务器和Socket.IO
 const server = http.createServer(app);
@@ -39,8 +48,7 @@ function getLocalIP() {
   return '0.0.0.0';
 }
 
-// 房间管理
-let currentRoomId = null;
+
 
 function generateRoomId() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -53,7 +61,7 @@ function generateRoomId() {
 
 // 创建UDP服务器
 const udpServer = dgram.createSocket('udp4');
-const UDP_PORT = 33333;
+const UDP_PORT = 33333;//listen port for udp
 
 udpServer.on('listening', () => {
   udpServer.setBroadcast(true);
@@ -62,7 +70,10 @@ udpServer.on('listening', () => {
 
 udpServer.on('message', (msg, rinfo) => {
   if (rinfo.port == 33333) {
-    console.log(`接收到广播消息来自 ${rinfo.address}:${rinfo.port} 内容: ${msg.toString()}`);
+    remoteIp = rinfo.address;
+    console.log(`接收到udpServer广播消息来自 ${rinfo.address}:${rinfo.port} 内容: ${msg.toString()}`);
+    console.log('remoteIp=',remoteIp);
+    
     wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({
@@ -71,12 +82,56 @@ udpServer.on('message', (msg, rinfo) => {
         }));
       }
     });
+    
   }
   if (msg.toString() === currentRoomId) {
+    remoteIp = rinfo.address;//从客户端发来了roomId 服务端获取到remote IP
+    console.log(remoteIp);
+
+    
     const response = getLocalIP();
-    udpServer.send(response, UDP_PORT, rinfo.address, () => {
+    udpServer.send(response, UDP_PORT, rinfo.address, () => {//把自己的ip给客户端
+      //websocket让服务器的前端跳转
+      wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({
+            type: 'udp_response',
+            data: 'startOnlineGame'
+          }));
+        }
+      });
       console.log(`回复服务端 IP: ${response}`);
+      console.log("开始游戏");
     });
+  }else if(msg.toString() === 'ready') {
+    // remoteIp = rinfo.address;
+    console.log(remoteIp);
+    
+    // remoteIp = rinfo.address;
+    // const response = '';
+    
+      //websocket让前端跳转
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({
+          type: 'udp_responseReady',
+          data: `remoteReady from ${remoteIp}`
+        }));
+      }
+    });    
+  }else if(msg.toString() === 'finish') {
+    // remoteIp = rinfo.address;
+    // const response = '';
+    
+      //websocket让前端跳转
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({
+          type: 'udp_responseFinish',
+          data: `remoteFinish from ${rinfo.address}`
+        }));
+      }
+    });  
   }
 });
 
@@ -99,18 +154,99 @@ app.all('/send-udp-broadcast', (req, res) => {
       return res.status(400).json({ success: false, message: '未提供房间码' });
     }
     const message = Buffer.from(roomId);
-
     client.send(message, 0, message.length, UDP_PORT, '255.255.255.255', (err) => {
       client.close();
       if (err) {
         console.error('发送UDP广播时出错:', err);
         res.status(500).json({ success: false, message: '发送UDP广播失败' });
       } else {
+        console.log('udp广播发射到33333');
+        
         res.json({ success: true, message: `UDP广播从 ${localIp} 发送成功` });
       }
     });
   });
 });
+
+app.all('/send-score', (req, res) => {
+  const score = req.query.score || req.body.score; // 获取分数
+  const targetIp = remoteIp;    // 获取目标IP
+
+  if (!targetIp || !score) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'IP和Score不能为空' 
+    });
+  }
+
+  const client = dgram.createSocket('udp4');
+  const port = 33333;
+  const message = score.toString(); // 直接发送分数（字符串格式）
+
+  client.send(message, port, targetIp, (err) => {
+    client.close(); // 发送后关闭socket
+    if (err) {
+      return res.status(500).json({ 
+        success: false, 
+        message: `发送分数到 ${targetIp}:${port} 失败`,
+        error: err.message 
+      });
+    }
+    res.json({ 
+      success: true, 
+      message: `已发送分数 ${score} 到 ${targetIp}:${port}` 
+    });
+  });
+});
+
+
+app.all('/send-ready', (req, res) => {
+  const targetIp = remoteIp;    // 获取目标IP
+
+  const client = dgram.createSocket('udp4');
+  const port = 33333;
+  const message = 'ready'; 
+
+  client.send(message, port, targetIp, (err) => {
+    client.close(); // 发送后关闭socket
+    if (err) {
+      return res.status(500).json({ 
+        success: false, 
+        message: `发送ready失败`,
+        error: err.message 
+      });
+    }
+    res.json({ 
+      success: true, 
+      message: `已发送ready到 ${targetIp}:${port}` 
+    });
+  });
+});
+
+app.all('/send-finish', (req, res) => {
+  const targetIp = remoteIp;    // 获取目标IP
+
+  const client = dgram.createSocket('udp4');
+  const port = 33333;
+  const message = 'finish'; 
+
+  client.send(message, port, targetIp, (err) => {
+    client.close(); // 发送后关闭socket
+    if (err) {
+      return res.status(500).json({ 
+        success: false, 
+        message: `发送finish失败`,
+        error: err.message 
+      });
+    }
+    res.json({ 
+      success: true, 
+      message: `已发送finish到 ${targetIp}:${port}` 
+    });
+  });
+});
+
+
 
 app.get('/create-room', (req, res) => {
   currentRoomId = generateRoomId();
