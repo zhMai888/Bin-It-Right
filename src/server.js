@@ -131,6 +131,19 @@ udpServer.on('message', (msg, rinfo) => {
         }));
       }
     });  
+  }else if(msg.toString().startsWith('score')) {
+    // remoteIp = rinfo.address;
+    // const response = '';
+    
+      //websocket让前端跳转
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({
+          type: 'udp_responseScore',
+          data: `remoteScore is ${msg.toString().substring(5)} from ${rinfo.address}`
+        }));
+      }
+    });  
   }
 });
 
@@ -180,7 +193,7 @@ app.all('/send-score', (req, res) => {
 
   const udpclient = dgram.createSocket('udp4');
   const port = 33333;
-  const message = score.toString(); // 直接发送分数（字符串格式）
+  const message = 'score'+score.toString(); // 直接发送分数（字符串格式）
 
   udpclient.send(message, port, targetIp, (err) => {
     udpclient.close(); // 发送后关闭socket

@@ -286,6 +286,8 @@ export default {
       console.log('收到UDP消息:', data);
       if (data.type === 'udp_responseFinish') {
         this.remoteGameOver = true;
+      }else if (data.type === 'udp_responseScore') {
+        this.scorerival = data.data;
       }
     };
     console.log('Game ws启动于3030');
@@ -294,6 +296,8 @@ export default {
     this.updateCenter();
     let that = this
     setInterval(() => {
+      console.log(this.scorerival);
+      
       if (this.leasetime > 0 && this.gameIntro) {
         this.leasetime--;
       } else if (this.leasetime === 0 && !this.showTimeout && !this.gameOver) {
@@ -654,6 +658,15 @@ export default {
           this.mistake.push(g.img); // 记录错误垃圾图片地址(唯一定位)
           matchedBin.emotion = this.sad[Math.floor(Math.random() * this.sad.length)];
           matchedBin.correct = false;
+        }
+
+        // online发送分数到对手
+        if (this.gamemodel === 'online') {
+          axios.get(`http://localhost:3000/send-score`, {
+            params: {
+              score: this.score
+            }
+          });
         }
 
         if (this.binggoNum >= 10) {
