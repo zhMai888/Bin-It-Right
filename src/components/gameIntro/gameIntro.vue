@@ -80,6 +80,7 @@ export default {
         }, 800);
       } else {
         try {
+          this.is_raise = false;
           await axios.get('http://localhost:3000/send-ready');
           this.is_ready = true;
         } catch (e) {
