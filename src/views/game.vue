@@ -6,6 +6,11 @@
       <!-- 开始游戏倒计时 -->
       <Countdown />
       <div v-if="gameStarted">
+        <!-- 游戏背景音效 -->
+        <audio ref="bgm" autoplay loop>
+          <source src="../assets/music/bgm.mp3" type="audio/mpeg">
+          Your browser does not support the audio element.
+        </audio>
         <!-- 上边区域 -->
         <div v-if="this.gamemodel==='local'">
           <div>
@@ -98,6 +103,10 @@
           </div>
         </div>
         <div v-if="mygameOver && (gamemodel === 'local' || (gamemodel === 'online' && remoteGameOver))">
+          <audio ref="winAudio" src="../assets/music/Victory.mp3"></audio>
+          <audio ref="drawAudio" src="../assets/music/DrawLevel.mp3"></audio>
+          <audio ref="loseAudio" src="../assets/music/Defeat.mp3"></audio>
+          <audio ref="timeoutAudio" src="../assets/music/Timeout.mp3"></audio>
           <div v-if="gameOver" class="overlay">
             <div v-if="this.gamemodel==='local'">
               <div v-if="showTimeout" class="timeout-text">
@@ -240,7 +249,7 @@ export default {
       score: 0,
       scorerival: 0,
       best_score: 0,
-      leasetime: 64,  // 多4秒用来平衡倒计时时间
+      leasetime: 9,  // 多4秒用来平衡倒计时时间
       gameOver: false,  // 真正游戏结束标志
       mygameOver: false, // online我的游戏结束标志
       remoteGameOver: false, // online对方游戏结束标志
@@ -254,7 +263,8 @@ export default {
       mistake: [],  // 错误垃圾记录
       showMistake: false,
       showNoMistake: false,
-      ws:null
+      ws:null,
+      hasPlayedResultAudio: false
     };
   },
   watch: {
@@ -272,6 +282,15 @@ export default {
     },
     remoteGameOver() {
       this.checkGameOverOnline();
+    },
+    showTimeout(newVal) {
+      if (newVal && !this.hasPlayedResultAudio) {
+        this.hasPlayedResultAudio = true;
+
+        this.$nextTick(() => {
+          this.playResultAudio(); 
+        });
+      }
     }
   },
 
@@ -299,6 +318,9 @@ export default {
       if (this.leasetime > 0 && this.gameIntro) {
         this.leasetime--;
       } else if (this.leasetime === 0 && !this.showTimeout && !this.gameOver) {
+        if (this.$refs.bgm && !this.$refs.bgm.paused) {
+          this.$refs.bgm.pause();
+        }
         that.triggerTimeout();
       }
     }, 1000);
@@ -365,6 +387,32 @@ export default {
     }
   },
   methods: {
+    playResultAudio() {
+      // 先暂停所有音效，防止重复
+      ['winAudio', 'drawAudio', 'loseAudio', 'timeoutAudio'].forEach(ref => {
+        const audio = this.$refs[ref];
+        if (audio) {
+          audio.pause();
+          audio.currentTime = 0;
+        }
+      });
+      // 根据游戏类型配对游戏音效
+      if (this.gamemodel === 'local') {
+        if (this.score > this.best_score && this.$refs.winAudio) {
+          this.$refs.winAudio.play();
+        } else {
+          this.$refs.timeoutAudio.play();
+        }
+      } else {
+        if (this.score > this.scorerival && this.$refs.winAudio) {
+          this.$refs.winAudio.play();
+        } else if (this.score === this.scorerival && this.$refs.drawAudio) {
+          this.$refs.drawAudio.play();
+        } else if (this.score < this.scorerival && this.$refs.loseAudio) {
+          this.$refs.loseAudio.play();
+        }
+      }
+    },
     async getTrash(){
       try {
         const res = await getAllTrash();
