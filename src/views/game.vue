@@ -172,7 +172,7 @@
               </div>
             </div> 
             <div v-if="showNoMistake">
-              <button @click="BackHomeClick" class="backhomeButton2">
+              <button @click="BackHomeClick" :class="[gamemodel === 'online' ? 'backhomeButtonCenter' : 'backhomeButton2']">
                 <img src="../assets/backhome.png" alt="" style="width: 40px !important; height: 40px !important;">
               </button>
               <button @click="againClick" class="againButton2" v-if="this.gamemodel == 'local'">
@@ -465,16 +465,16 @@ export default {
 
         if (this.showMistake) {
           this.mistake = this.mistake.map(imgPath => {
-            const match = imgPath.match(/\/img\/([^/.]+)\./);
-            if (!match) return null;
-            const fileNameNoExt = match[1];
+            const fileWithExt = imgPath.split('/').pop(); 
+            const fileNameNoExt = fileWithExt.split('.')[0].toLowerCase();
             const trashItem = this.trash.find(t => {
-              const nameNoSpace = t.name.replace(/\s+/g, '').toLowerCase();
-              return nameNoSpace === fileNameNoExt.toLowerCase();
+              const trashImgFile = t.img.split('/').pop().toLowerCase(); 
+              return trashImgFile.startsWith(fileNameNoExt); 
             });
+
             return trashItem ? { ...trashItem } : null;
           }).filter(item => item !== null);
-        } else {
+        }else {
           this.showNoMistake = true;
         }
       }, 5000);
@@ -654,6 +654,7 @@ export default {
           this.binggoNum = 0;
           this.factors = 1;
           this.mistake.push(g.img); // 记录错误垃圾图片地址(唯一定位)
+          
           matchedBin.emotion = this.sad[Math.floor(Math.random() * this.sad.length)];
           matchedBin.correct = false;
         }
@@ -1139,6 +1140,18 @@ z-index: 10001;
   position: absolute;
   top: 50%;
   left: 60%;
+  transform: translate(-50%, -50%);
+  width: 100px;
+  height: 100px;
+}
+
+.backhomeButtonCenter {
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  background-color: #c0392b;
+  position: absolute;
+  top: 50%;
+  left: 50%; 
   transform: translate(-50%, -50%);
   width: 100px;
   height: 100px;
