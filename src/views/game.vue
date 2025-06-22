@@ -128,7 +128,7 @@
             <div v-else>
               <div v-if="showTimeout" class="timeout-text">
                 <p v-if="score > scorerival"><span class="timeout-clock2">🎉</span> Congratulations!</p>
-                <p v-else-if="score === scorerival"><span class="timeout-clock">🤝</span> Draw Level!</p>
+                <p v-else-if="score == scorerival"><span class="timeout-clock">🤝</span> Draw Level!</p>
                 <p v-else><span class="timeout-clock2">💀</span> Defeat!</p>
               </div>
               <Firework
