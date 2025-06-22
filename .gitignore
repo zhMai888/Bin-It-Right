@@ -24,3 +24,4 @@ pnpm-debug.log*
 src/server.js.bak
 src/views/game.vue.bak
 src/all-api.js
+src/all-api.js

@@ -26,7 +26,7 @@
         </div>
       </div>
     </transition>
-    <p class="online_text" v-if="gamemodel === 'online' && is_ready">Wait for another Player……</p>
+    <p class="online_text" v-if="gamemodel === 'online' && is_ready && show_wait">Wait for another Player……</p>
   </div>
 </template>
 
@@ -50,6 +50,7 @@ export default {
       imageLoaded: false,
       gamemodel: null,
       is_ready: false,
+      show_wait: true,
       remote_ready: false,
       ws: null,
       carouselImages: []
@@ -62,6 +63,7 @@ export default {
       const data = JSON.parse(event.data);
       console.log('收到UDP消息:', data);
       if (data.type === 'udp_responseReady') {
+        this.show_wait = false;
         this.remote_ready = true;
       }
     };
