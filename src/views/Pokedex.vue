@@ -7,7 +7,7 @@
         <div class="category-nav">
           <!-- 新增返回按钮 -->
           <button class="return-button" @click="$router.go(-1)">
-            <img src="@/assets/returnBack.png" alt="Return" />
+            <img src="../assets/returnBack1.png" alt="Return" />
           </button>
 
           <button

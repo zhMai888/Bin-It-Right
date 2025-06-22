@@ -1,13 +1,18 @@
 <template>
   <div class="game-mode-selection">
-    <h1>选择游戏模式</h1>
-    <button class="game-btn" @click="goToSinglePlayer">单人游戏</button>
-    <button class="game-btn" @click="createRoom(); showJoinInput = false">创建房间</button>
-    <span v-if="roomId" class="room-id" style="display: block;">房间号: {{ roomId }}</span>
-    <button class="game-btn" @click="joinRoom">加入房间</button>
+    <div class="header">
+      <button class="return-btn" @click="$router.go(-1)">
+        <img src="../assets/returnBack2.png" alt="return">
+      </button>
+      <h1>Select Game Mode</h1>
+    </div>
+    <button class="game-btn" @click="goToSinglePlayer">Single Player</button>
+    <button class="game-btn" @click="createRoom(); showJoinInput = false">Create Room</button>
+    <span v-if="roomId" class="room-id" style="display: block;">Room ID: {{ roomId }}</span>
+    <button class="game-btn" @click="joinRoom">Join Room</button>
     <div v-if="showJoinInput" class="join-room-input-group">
-      <input v-model="joinRoomId" type="text" placeholder="请输入房间码">
-      <button class="game-btn" @click="confirmJoinRoom()">确定</button>
+      <input v-model="joinRoomId" type="text" placeholder="Enter room code">
+      <button class="game-btn" @click="confirmJoinRoom()">Confirm</button>
     </div>
   </div>
 </template>
@@ -16,15 +21,12 @@
 import axios from 'axios';
 import io from 'socket.io-client';
 
-
-
-
 async function getLocalNetworkIP() {
   try {
     const response = await axios.get('http://localhost:3000/get-local-ip');
     return response.data.ip;
   } catch (error) {
-    console.error('获取局域网 IP 失败:', error);
+    console.error('Failed to get local network IP:', error);
     return '127.0.0.1';
   }
 }
@@ -48,18 +50,18 @@ export default {
   },
   mounted() {
     this.ws = new WebSocket('ws://localhost:3030');
-    console.log('GameModeSelection ws启动于3030');
+    console.log('GameModeSelection websocket started on port 3030');
 
   },
   beforeDestroy(){
     if (this.ws) {
-      console.log('关闭GameModeSelection前端ws on 3030');
+      console.log('Closing GameModeSelection websocket on 3030');
       this.ws.close();
     }
   },
   methods: {
     goToSinglePlayer() {
-      // 跳转到单人游戏页面
+      // Navigate to single player page
       this.$router.push( '/game/local');
     },
     async createRoom() {
@@ -69,17 +71,17 @@ export default {
         this.roomId = response.data.roomId;
         socket.emit('join_room', this.roomId);
         console.log(`local join to ${this.roomId} through socket`);
-        //如果ws传来udp_response并且data是'startOnlineGame'，跳转到在线游戏页面
+        // If websocket receives udp_response with data 'startOnlineGame', navigate to online game page
         this.ws.onmessage = (event) => {
           const data = JSON.parse(event.data);
-          console.log('收到UDP消息:', data);
+          console.log('Received UDP message:', data);
           if (data.type === 'udp_response' && data.data === 'startOnlineGame') {
             this.$router.push('/game/online');
             this.ws.close();
           }
         };
       } catch (error) {
-        console.error('创建房间失败:', error);
+        console.error('Failed to create room:', error);
       }
     },
     joinRoom() {
@@ -88,7 +90,7 @@ export default {
     async confirmJoinRoom() {
       try {
         const ip = await getLocalNetworkIP();
-        // 发送 UDP 广播，并将输入值作为房间码传递
+        // Send UDP broadcast with the input value as room code
         await axios.get(`http://${ip}:3000/send-udp-broadcast`, {
           params: {
             roomId: this.joinRoomId
@@ -97,7 +99,7 @@ export default {
         this.ws.onmessage = async (event) => {
           const data = JSON.parse(event.data);
           if (data.type === 'udp_response') {
-            console.log('收到UDP回复:', data.data);
+            console.log('Received UDP response:', data.data);
             const server_ip = data.data;
             try {
               const response = await axios.get(`http://${server_ip}:3000/join-room`, {
@@ -107,22 +109,22 @@ export default {
               });
               if (response.data.success) {
                 socket.emit('join-room', this.joinRoomId);
-                // 加入房间成功后的逻辑
-                console.log("加入房间成功");//已经连接到另一台机器的后端
+                // Logic after successfully joining the room
+                console.log("Successfully joined the room"); // Already connected to another machine's backend
                 this.$router.push('/game/online');
-                this.ws.close(); // 关闭 WebSocket 连接
-                
+                this.ws.close(); // Close WebSocket connection
+
                 this.ws.close();
               } else {
-                console.error('加入房间失败:', response.data.message);
+                console.error('Failed to join room:', response.data.message);
               }
             } catch (error) {
-              console.error('加入房间时出错:', error);
+              console.error('Error joining room:', error);
             }
           }
         };
       } catch (error) {
-        console.error('加入房间时出错:', error);
+        console.error('Error joining room:', error);
       }
     }
   }
@@ -130,6 +132,34 @@ export default {
 </script>
 
 <style scoped>
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+}
+
+.return-btn {
+  position: absolute;
+  left: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  width: auto;
+  box-shadow: none;
+}
+
+.return-btn img {
+  width: 40px;
+  height: 40px;
+}
+
+.return-btn:hover {
+  transform: scale(1.1);
+  background: none;
+}
+
 .join-room-input-group {
   width: 200px;
   display: flex;
