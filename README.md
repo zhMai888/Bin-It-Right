@@ -1,4 +1,4 @@
-# khan
+# bin_it_right
 
 ## Project setup
 ```
