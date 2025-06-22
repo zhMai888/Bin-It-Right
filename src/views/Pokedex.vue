@@ -5,6 +5,11 @@
 
         <!-- 顶部导航栏 -->
         <div class="category-nav">
+          <!-- 新增返回按钮 -->
+          <button class="return-button" @click="$router.go(-1)">
+            <img src="@/assets/returnBack.png" alt="Return" />
+          </button>
+
           <button
               v-for="category in categories"
               :key="category.id"
@@ -17,7 +22,7 @@
               :class="['nav-button', 'category-0', { active: selectedCategory === 0 }]"
               @click="selectedCategory = 0"
           >
-            全部
+            All
           </button>
         </div>
 
@@ -57,15 +62,15 @@
             <div class="info-box" :class="getTypeClass(currentCard.typeid)">
               <div class="info-group">
                 <div class="info-item">
-                  <span class="label">名称：</span>
+                  <span class="label">Name:</span>
                   <span class="value">{{ currentCard.name }}</span>
                 </div>
                 <div class="info-item">
-                  <span class="label">类型：</span>
+                  <span class="label">Type:</span>
                   <span class="value">{{ getCategoryName(currentCard.typeid) }}</span>
                 </div>
               </div>
-              <p><strong>简介：</strong>{{ currentCard.description || '暂无简介' }}</p>
+              <p><strong>Description:</strong>{{ currentCard.description || 'No description available' }}</p>
             </div>
           </div>
         </div>
@@ -82,11 +87,11 @@ export default {
       selectedCategory: 0,
       currentCard: null,
       categories: [
-        { id: 1, name: '食物' },
-        { id: 2, name: '可回收垃圾' },
-        { id: 3, name: '不可回收垃圾' },
-        { id: 4, name: '有害垃圾' },
-        { id: 5, name: '厨余垃圾' }
+        { id: 1, name: 'Food' },
+        { id: 2, name: 'Recyclable' },
+        { id: 3, name: 'Non-recyclable' },
+        { id: 4, name: 'Hazardous' },
+        { id: 5, name: 'Kitchen Waste' }
       ],
       trashData: []
     };
@@ -102,7 +107,7 @@ export default {
   methods: {
     getCategoryName(typeid) {
       const category = this.categories.find(c => c.id === typeid);
-      return category ? category.name : '未知类型';
+      return category ? category.name : 'Unknown Type';
     },
     selectCard(card) {
       this.currentCard = card;
@@ -166,6 +171,22 @@ html, body {
   overflow: hidden;
 }
 
+.return-button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  margin-right: 50px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.return-button img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .category-nav {
   display: flex;
   justify-content: center;
@@ -175,6 +196,7 @@ html, body {
   border-bottom: 1px solid #ddd;
   flex-shrink: 0;
 }
+
 /* 公共按钮样式 */
 .nav-button {
   width: 100px;               /* ✅ 固定宽度 */
